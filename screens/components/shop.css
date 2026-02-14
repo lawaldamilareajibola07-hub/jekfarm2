@@ -1,0 +1,438 @@
+/* Shopping cart specific styles */
+
+/* Empty cart illustration */
+.empty-cart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 32px;
+  text-align: center;
+}
+
+.empty-cart-icon {
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.empty-cart-icon svg {
+  width: 96px;
+  height: 96px;
+  color: #d1d5db;
+  stroke-width: 1.5;
+}
+
+.empty-cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #f97316;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.empty-cart-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.empty-cart-description {
+  color: #6b7280;
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+/* Cart item styling */
+.cart-item {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 12px;
+}
+
+.cart-item-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cart-item-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cart-item-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.cart-item-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.cart-item-weight {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.cart-item-price {
+  font-size: 18px;
+  font-weight: 600;
+  color: #22c55e;
+}
+
+/* Discount styling */
+.discount-indicator {
+  background: #22c55e;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.discount-tag {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: inline-block;
+}
+
+/* Recommendations section */
+.recommendations {
+  padding: 16px;
+}
+
+.recommendations-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.recommendation-item {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.recommendation-image {
+  width: 100%;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-bottom: 8px;
+}
+
+.recommendation-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recommendation-weight {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.recommendation-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recommendation-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* AgroPoints section */
+.agropoints-section {
+  padding: 16px;
+}
+
+.agropoints-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.agropoints-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.agropoints-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agropoints-icon {
+  background: #22c55e;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.agropoints-text {
+  color: #15803d;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.agropoints-arrow {
+  color: #15803d;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.agropoints-arrow:hover {
+  background: #dcfce7;
+}
+
+/* Checkout specific styles */
+.checkout-section {
+  margin-bottom: 24px;
+}
+
+.checkout-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.checkout-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.checkout-icon {
+  background: #f0fdf4;
+  padding: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.checkout-icon svg {
+  width: 20px;
+  height: 20px;
+  color: #22c55e;
+}
+
+.checkout-content {
+  flex: 1;
+}
+
+.checkout-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.checkout-address {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.checkout-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.checkout-phone {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.home-badge {
+  background: #f0fdf4;
+  color: #22c55e;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Price breakdown */
+.price-breakdown {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.price-row.total {
+  font-size: 18px;
+  font-weight: 600;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 12px;
+}
+
+.price-row.total .price {
+  color: #22c55e;
+}
+
+/* Order success styles */
+.success-container {
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.success-illustration {
+  width: 192px;
+  height: 192px;
+  margin: 0 auto 32px;
+  border-radius: 12px;
+}
+
+.success-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.success-description {
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.order-details {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  margin-bottom: 32px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.detail-label {
+  color: #6b7280;
+  flex-shrink: 0;
+  margin-right: 16px;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #1f2937;
+  text-align: right;
+  flex: 1;
+}
+
+.detail-row.total {
+  font-size: 16px;
+  font-weight: 600;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 16px;
+}
+
+.detail-row.total .detail-value {
+  color: #1f2937;
+  font-size: 18px;
+}
+
+.status-paid {
+  background: #f0fdf4;
+  color: #22c55e;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Button group for success page */
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}

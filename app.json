@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "AgreonPay",
+    "slug": "Agreonpay-dev",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/adaptive-icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/adaptive-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ng.com.agreonpay.app"
+    },
+    "android": {
+      "package": "ng.com.agreonpay.app",
+      "versionCode": 3,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_WIFI_STATE"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#41B63E"
+      }
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "owner": "sheddycode",
+    "extra": {
+      "eas": {
+        "projectId": "ef38591e-1169-4c1f-951f-3c7309875443"
+      }
+    }
+  }
+}

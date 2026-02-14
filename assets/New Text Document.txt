@@ -1,0 +1,4 @@
+ "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#41B63E"
+      }

@@ -1,0 +1,100 @@
+.empty-cart-container {
+  min-height: 100vh;
+  background-color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.back-button {
+  padding: 8px;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.back-icon {
+  height: 24px;
+  width: 24px;
+  color: #374151;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.header-spacer {
+  width: 40px;
+}
+
+/* Empty State */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.cart-icon-container {
+  position: relative;
+  margin-bottom: 24px;
+  width: 100px;
+}
+
+.cart-icon {
+  height: 100px;
+  width: 100px;
+  color: #9ca3af;
+  stroke-width: 1.5;
+}
+
+.x-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #f97316;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.x-symbol {
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.empty-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.empty-description {
+  color: #6b7280;
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 260px;
+}

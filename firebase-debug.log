@@ -1,0 +1,56 @@
+[debug] [2026-01-28T21:20:57.817Z] ----------------------------------------------------------------------
+[debug] [2026-01-28T21:20:57.829Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Alex\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting --project agreonpay-eb1ac
+[debug] [2026-01-28T21:20:57.831Z] CLI Version:   15.4.0
+[debug] [2026-01-28T21:20:57.832Z] Platform:      win32
+[debug] [2026-01-28T21:20:57.832Z] Node Version:  v22.16.0
+[debug] [2026-01-28T21:20:57.834Z] Time:          Wed Jan 28 2026 22:20:57 GMT+0100 (West Africa Standard Time)
+[debug] [2026-01-28T21:20:57.834Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-28T21:21:11.662Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-28T21:21:11.664Z] > authorizing via signed-in user (alexandermfoniso18@gmail.com)
+[debug] [2026-01-28T21:21:11.665Z] [iam] checking project agreonpay-eb1ac for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-01-28T21:21:11.671Z] Checked if tokens are valid: true, expires at: 1769638609512
+[debug] [2026-01-28T21:21:11.672Z] Checked if tokens are valid: true, expires at: 1769638609512
+[debug] [2026-01-28T21:21:11.676Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/agreonpay-eb1ac:testIamPermissions [none]
+[debug] [2026-01-28T21:21:11.677Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/agreonpay-eb1ac:testIamPermissions x-goog-quota-user=projects/agreonpay-eb1ac
+[debug] [2026-01-28T21:21:11.678Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/agreonpay-eb1ac:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-28T21:21:13.542Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/agreonpay-eb1ac:testIamPermissions 200
+[debug] [2026-01-28T21:21:13.544Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/agreonpay-eb1ac:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-28T21:21:13.547Z] Checked if tokens are valid: true, expires at: 1769638609512
+[debug] [2026-01-28T21:21:13.548Z] Checked if tokens are valid: true, expires at: 1769638609512
+[debug] [2026-01-28T21:21:13.560Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/agreonpay-eb1ac [none]
+[debug] [2026-01-28T21:21:43.578Z] *** [apiv2] error from fetch(https://firebase.googleapis.com/v1beta1/projects/agreonpay-eb1ac, {"headers":{},"method":"GET","signal":{"reason":""}}): AbortError: The user aborted a request.
+[debug] [2026-01-28T21:21:43.579Z] Timeout reached making request to https://firebase.googleapis.com/v1beta1/projects/agreonpay-eb1ac (original: The user aborted a request.)
+[error] 
+[error] Error: Assertion failed: resolving hosting target of a site with no site name or target name. This should have caused an error earlier
+[debug] [2026-01-28T21:22:52.188Z] ----------------------------------------------------------------------
+[debug] [2026-01-28T21:22:52.201Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Alex\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
+[debug] [2026-01-28T21:22:52.203Z] CLI Version:   15.4.0
+[debug] [2026-01-28T21:22:52.203Z] Platform:      win32
+[debug] [2026-01-28T21:22:52.204Z] Node Version:  v22.16.0
+[debug] [2026-01-28T21:22:52.206Z] Time:          Wed Jan 28 2026 22:22:52 GMT+0100 (West Africa Standard Time)
+[debug] [2026-01-28T21:22:52.206Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-28T21:23:04.288Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-28T21:23:04.293Z] > authorizing via signed-in user (alexandermfoniso18@gmail.com)
+[debug] [2026-01-28T21:23:04.295Z] [iam] checking project agreonpay-eb1ac for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-01-28T21:23:04.307Z] Checked if tokens are valid: true, expires at: 1769638609512
+[debug] [2026-01-28T21:23:04.308Z] Checked if tokens are valid: true, expires at: 1769638609512
+[debug] [2026-01-28T21:23:04.322Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/agreonpay-eb1ac:testIamPermissions [none]
+[debug] [2026-01-28T21:23:04.323Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/agreonpay-eb1ac:testIamPermissions x-goog-quota-user=projects/agreonpay-eb1ac
+[debug] [2026-01-28T21:23:04.324Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/agreonpay-eb1ac:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-28T21:23:05.964Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/agreonpay-eb1ac:testIamPermissions 200
+[debug] [2026-01-28T21:23:05.966Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/agreonpay-eb1ac:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-28T21:23:05.971Z] Checked if tokens are valid: true, expires at: 1769638609512
+[debug] [2026-01-28T21:23:05.971Z] Checked if tokens are valid: true, expires at: 1769638609512
+[debug] [2026-01-28T21:23:05.974Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/agreonpay-eb1ac [none]
+[debug] [2026-01-28T21:23:07.090Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/agreonpay-eb1ac 200
+[debug] [2026-01-28T21:23:07.091Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/agreonpay-eb1ac {"projectId":"agreonpay-eb1ac","projectNumber":"148173046262","displayName":"Agreonpay","name":"projects/agreonpay-eb1ac","resources":{"hostingSite":"agreonpay-eb1ac"},"state":"ACTIVE","etag":"1_ec915c81-4153-4169-8c89-daf0fb30d50a"}
+[info] 
+[info] === Deploying to 'agreonpay-eb1ac'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2026-01-28T21:23:07.135Z] Checked if tokens are valid: true, expires at: 1769638609512
+[debug] [2026-01-28T21:23:07.136Z] Checked if tokens are valid: true, expires at: 1769638609512
+[debug] [2026-01-28T21:23:07.137Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/agreonpay-eb1ac/versions [none]
+[debug] [2026-01-28T21:23:07.139Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/agreonpay-eb1ac/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
