@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { useCart } from "../CartContext";
+import { useCart } from "../../context/CartContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import cart1Img from "../../assets/cart1.png";

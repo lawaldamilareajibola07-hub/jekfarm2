@@ -13,7 +13,7 @@ import {
   Dimensions
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useCart } from "../screens/CartContext"; // Add this import
+import { useCart } from "../context/CartContext";
 
 const BASE_URL = "https://jekfarms.com.ng";
 const { width } = Dimensions.get('window');

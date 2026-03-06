@@ -7,7 +7,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useCart } from "../CartContext";
+// Corrected import for CartContext
+import { useCart } from "../../context/CartContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Add this import for your image (update the path as needed)

@@ -7,7 +7,6 @@ import React, {
 import {
   View,
   Text,
-  ScrollView,
   SafeAreaView,
   TouchableOpacity,
   StyleSheet,
@@ -16,17 +15,18 @@ import {
   Easing,
   Image,
 } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
-
 import Categories from "../components/Categories";
 import HomeCategories from "./components/HomeCategories";
 import DiscountedItems from "../components/DiscountedItems";
 import HomeSliderBanner from "./components/HomeSliderBanner";
+import HomeDiscounted from "./components/HomeDiscounted";
 import KYCBanner from "../components/KYCBanner";
-
+import HomePromoModal from "./components/HomePromoModal";
+import FloatingSupportButtons from "./components/FloatingSupportButtons";
 
 const BASE_URL = "https://jekfarms.com.ng";
 
@@ -38,11 +38,28 @@ export default function Home({ navigation, route }) {
   const [activeTab, setActiveTab] = useState("natural");
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("Vegetables");
+  const [showPromo, setShowPromo] = useState(false);
+
+  /* =============================
+     PREMIUM GREETING STATES
+  ============================== */
+  const [greeting, setGreeting] = useState("");
+  const [greetingIcon, setGreetingIcon] = useState("sunny");
+
+  const greetingFade = useRef(new Animated.Value(0)).current;
+  const greetingSlide = useRef(new Animated.Value(10)).current;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const toggleAnim = useRef(new Animated.Value(0)).current;
+  const scrollY = useRef(new Animated.Value(0)).current;
 
+  const nameFade = useRef(new Animated.Value(0)).current;
+  const nameSlide = useRef(new Animated.Value(10)).current;
+
+  /* =============================
+     INITIAL HEADER ANIMATION
+  ============================== */
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -60,6 +77,104 @@ export default function Home({ navigation, route }) {
     ]).start();
   }, []);
 
+  /* =============================
+     PROFESSIONAL GREETING ANIMATION
+  ============================== */
+  useEffect(() => {
+    const updateGreeting = () => {
+      const hour = new Date().getHours();
+
+      let newGreeting = "";
+      let newIcon = "";
+
+      if (hour < 12) {
+        newGreeting = "Good Morning";
+        newIcon = "sunny";
+      } else if (hour < 17) {
+        newGreeting = "Good Afternoon";
+        newIcon = "partly-sunny";
+      } else {
+        newGreeting = "Good Evening";
+        newIcon = "moon";
+      }
+
+      // Animate out
+      Animated.parallel([
+        Animated.timing(greetingFade, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(greetingSlide, {
+          toValue: -5,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setGreeting(newGreeting);
+        setGreetingIcon(newIcon);
+
+        // Animate in
+        greetingSlide.setValue(10);
+        Animated.parallel([
+          Animated.timing(greetingFade, {
+            toValue: 1,
+            duration: 400,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.spring(greetingSlide, {
+            toValue: 0,
+            tension: 60,
+            friction: 6,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
+    };
+
+    updateGreeting();
+    const interval = setInterval(updateGreeting, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  /* =============================
+     NAME ANIMATION
+  ============================== */
+  useEffect(() => {
+    if (user) {
+      nameFade.setValue(0);
+      nameSlide.setValue(10);
+
+      Animated.parallel([
+        Animated.timing(nameFade, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(nameSlide, {
+          toValue: 0,
+          tension: 60,
+          friction: 6,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [user]);
+
+  /* =============================
+     PROMO MODAL DELAY
+  ============================== */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowPromo(true);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  /* =============================
+     LOAD USER DATA
+  ============================== */
   useFocusEffect(
     useCallback(() => {
       loadUserData();
@@ -71,6 +186,9 @@ export default function Home({ navigation, route }) {
     if (storedUser) setUser(JSON.parse(storedUser));
   };
 
+  /* =============================
+     FETCH PRODUCTS
+  ============================== */
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -89,6 +207,9 @@ export default function Home({ navigation, route }) {
     }
   };
 
+  /* =============================
+     SEGMENT TOGGLE
+  ============================== */
   const toggleSlide = (tab) => {
     setActiveTab(tab);
     Animated.spring(toggleAnim, {
@@ -102,139 +223,220 @@ export default function Home({ navigation, route }) {
     outputRange: [4, 168],
   });
 
+  /* =============================
+     NAME FORMATTER
+  ============================== */
+  const formatName = (first, last) => {
+    if (!first && !last) return "Guest";
+
+    const capitalizeComplex = (text) =>
+      text
+        ?.trim()
+        .split(" ")
+        .filter(Boolean)
+        .map((word) =>
+          word
+            .split("-")
+            .map((part) =>
+              part
+                .split("'")
+                .map(
+                  (sub) =>
+                    sub.charAt(0).toUpperCase() +
+                    sub.slice(1).toLowerCase()
+                )
+                .join("'")
+            )
+            .join("-")
+        )
+        .join(" ");
+
+    return `${capitalizeComplex(first)} ${capitalizeComplex(last)}`.trim();
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <LinearGradient
-          colors={["#F9FAFB", "#FFFFFF"]}
-          style={styles.gradientHeader}
+      <View style={{ flex: 1 }}>
+        <Animated.ScrollView
+          showsVerticalScrollIndicator={false}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+          scrollEventThrottle={16}
         >
-          <Animated.View
-            style={[
-              styles.headerShadow,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
+          <LinearGradient
+            colors={["#F9FAFB", "#FFFFFF"]}
+            style={styles.gradientHeader}
           >
-            <View style={styles.headerRow}>
-              <View style={styles.leftSection}>
-                <View style={styles.profileCircle}>
-                  <Image
-                    source={require("../assets/useravatar.png")}
-                    style={styles.profileImage}
-                    resizeMode="cover"
-                  />
+            <Animated.View
+              style={[
+                styles.headerShadow,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }],
+                },
+              ]}
+            >
+              <View style={styles.headerRow}>
+                <View style={styles.leftSection}>
+                  <View style={styles.profileCircle}>
+                    <Image
+                      source={require("../assets/useravatar.png")}
+                      style={styles.profileImage}
+                    />
+                  </View>
+
+                  <View style={styles.textSection}>
+                    <Animated.View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        opacity: greetingFade,
+                        transform: [{ translateY: greetingSlide }],
+                      }}
+                    >
+                      <Text style={styles.goodMorning}>
+                        {greeting}
+                      </Text>
+
+                      <Ionicons
+                        name={greetingIcon}
+                        size={18}
+                        color="#F59E0B"
+                        style={{ marginLeft: 6 }}
+                      />
+                    </Animated.View>
+
+                    <Animated.Text
+                      style={[
+                        styles.userName,
+                        {
+                          opacity: nameFade,
+                          transform: [{ translateY: nameSlide }],
+                        },
+                      ]}
+                    >
+                      {formatName(
+                        user?.first_name,
+                        user?.last_name
+                      )}
+                    </Animated.Text>
+                  </View>
                 </View>
 
-                <View style={styles.textSection}>
-                  <Text style={styles.goodMorning}>
-                    Good Morning, 👋
-                  </Text>
-                  <Text style={styles.userName}>
-                    {user?.name ||
-                      "Rowland Emmanuel Ihezile"}
-                  </Text>
-                </View>
+                <TouchableOpacity style={styles.hexIcon}>
+                  <Image
+                    source={require("../assets/settings.png")}
+                    style={styles.settingsImage}
+                  />
+                </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.hexIcon}>
-                <Image
-                  source={require("../assets/settings.png")}
-                  style={styles.settingsImage}
-                  resizeMode="contain"
+              <TouchableOpacity style={styles.addressRow}>
+                <Text style={styles.address}>
+                  7 Adeyemi Street, off Bricfield RD
+                </Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={14}
+                  color="#10B981"
                 />
               </TouchableOpacity>
-            </View>
 
-            <TouchableOpacity style={styles.addressRow}>
-              <Text style={styles.address}>
-                7 Adeyemi Street, off Bricfield RD
-              </Text>
-              <Ionicons
-                name="chevron-down"
-                size={14}
-                color="#10B981"
-                style={{ marginLeft: 4 }}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.searchBox}>
-              <Ionicons
-                name="search-outline"
-                size={18}
-                color="#4c4d4d"
-              />
-              <Text style={styles.searchText}>
-                Search something
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.segmentWrapper}>
-              <Animated.View
-                style={[
-                  styles.segmentSlider,
-                  { transform: [{ translateX }] },
-                ]}
-              />
-
-              <TouchableOpacity
-                style={styles.segmentBtn}
-                onPress={() => toggleSlide("natural")}
-              >
-                <Text
-                  style={[
-                    styles.segmentText,
-                    activeTab === "natural" &&
-                      styles.activeSegmentText,
-                  ]}
-                >
-                  Natural Foods
+              <TouchableOpacity style={styles.searchBox}>
+                <Ionicons
+                  name="search-outline"
+                  size={18}
+                  color="#4c4d4d"
+                />
+                <Text style={styles.searchText}>
+                  Search something
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.segmentBtn}
-                onPress={() => toggleSlide("organic")}
-              >
-                <Text
+              <View style={styles.segmentWrapper}>
+                <Animated.View
                   style={[
-                    styles.segmentText,
-                    activeTab === "organic" &&
-                      styles.activeSegmentText,
+                    styles.segmentSlider,
+                    { transform: [{ translateX }] },
                   ]}
+                />
+
+                <TouchableOpacity
+                  style={styles.segmentBtn}
+                  onPress={() => toggleSlide("natural")}
                 >
-                  Organic Foods
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </LinearGradient>
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      activeTab === "natural" &&
+                        styles.activeSegmentText,
+                    ]}
+                  >
+                    Natural Foods
+                  </Text>
+                </TouchableOpacity>
 
-        <HomeCategories
-  activeCategory={activeCategory}
-  setActiveCategory={setActiveCategory}
-/>
+                <TouchableOpacity
+                  style={styles.segmentBtn}
+                  onPress={() => toggleSlide("organic")}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      activeTab === "organic" &&
+                        styles.activeSegmentText,
+                    ]}
+                  >
+                    Organic Foods
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </LinearGradient>
 
-<Categories
-  navigation={navigation}
-  addToCart={addToCart}
-/>
+          <HomeCategories
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+          />
 
-<DiscountedItems addToCart={addToCart} />
+          <Categories
+            navigation={navigation}
+            addToCart={addToCart}
+          />
 
-<HomeSliderBanner />
+          <DiscountedItems addToCart={addToCart} />
+          <HomeSliderBanner />
+          <HomeDiscounted />
 
-        {user && (!user.has_bvn || !user.has_nin) && (
-          <KYCBanner />
-        )}
-      </ScrollView>
+          {user && (!user.has_bvn || !user.has_nin) && (
+            <KYCBanner />
+          )}
+        </Animated.ScrollView>
+
+        <HomePromoModal
+          visible={showPromo}
+          onClose={() => setShowPromo(false)}
+        />
+
+        <FloatingSupportButtons
+          scrollY={scrollY}
+          showNotification={true}
+          onAIPress={() => navigation.navigate("AgricNovaAI")}
+          onSupportPress={() =>
+            navigation.navigate("CustomerSupport")
+          }
+        />
+      </View>
     </SafeAreaView>
   );
 }
+/* =============================
+   STYLES (UNCHANGED)
+============================== */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF" },
@@ -266,16 +468,11 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 21,
     backgroundColor: "#10B981",
-    justifyContent: "center",
-    alignItems: "center",
     marginRight: 12,
     overflow: "hidden",
   },
 
-  profileImage: {
-    width: "100%",
-    height: "100%",
-  },
+  profileImage: { width: "100%", height: "100%" },
 
   textSection: { justifyContent: "center" },
 
@@ -297,10 +494,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  address: {
-    fontSize: 13,
-    color: "#10B981",
-  },
+  address: { fontSize: 13, color: "#10B981" },
 
   hexIcon: {
     width: 42,
@@ -311,10 +505,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  settingsImage: {
-    width: 22,
-    height: 22,
-  },
+  settingsImage: { width: 22, height: 22 },
 
   searchBox: {
     flexDirection: "row",

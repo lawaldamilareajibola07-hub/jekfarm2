@@ -10,7 +10,7 @@ import {
   Alert 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../../api/api'; // make sure this path is correct
+import api from '../../api/axios'; // make sure this path is correct
 
 export default function SettingsSecurityScreen({ navigation }) {
   const [oldPassword, setOldPassword] = useState('');

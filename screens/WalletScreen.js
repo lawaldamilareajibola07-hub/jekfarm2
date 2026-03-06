@@ -17,7 +17,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../api/api";
+import api from "../api/axios";
 
 export default function WalletScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);

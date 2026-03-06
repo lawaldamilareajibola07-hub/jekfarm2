@@ -7,7 +7,7 @@ import KYCBanner from "../components/KYCBanner";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../api/api";
+import api from "../api/axios";
 
 export default function DashboardScreen() {
   const navigation = useNavigation();

@@ -17,7 +17,7 @@ import {
 import { Ionicons as Icon } from "@expo/vector-icons";
 import OTPTextInput from "react-native-otp-textinput";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../api/api";
+import api from "../api/axios";
 
 import Menu from "../assets/menu.png";
 import Gmail from "../assets/Gmail.png";

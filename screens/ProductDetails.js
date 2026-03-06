@@ -13,7 +13,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useCart } from "../CartContext";
+import { useCart } from "../context/CartContext";
 
 const ProductDetails = ({ route, navigation }) => {
   const [quantity, setQuantity] = useState(1);

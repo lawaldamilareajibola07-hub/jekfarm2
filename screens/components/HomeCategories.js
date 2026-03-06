@@ -9,62 +9,51 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
-
+import { useNavigation } from "@react-navigation/native";
 
 /* =========================
    FIRST CODE (TOP SECTION)
 ========================= */
 
 const categories = [
-  {
-    label: "Vegetables",
-    image: require("../../assets/carrot.png"),
-  },
-  {
-    label: "Meat",
-    image: require("../../assets/melon.png"),
-  },
-  {
-    label: "Fruits",
-    image: require("../../assets/apple.png"),
-  },
+  { label: "Vegetables", image: require("../../assets/carrot.png") },
+  { label: "Meat", image: require("../../assets/melon.png") },
+  { label: "Fruits", image: require("../../assets/apple.png") },
 ];
 
 function HomeCategories({ activeCategory, setActiveCategory }) {
+  const navigation = useNavigation();
+
   return (
     <View style={categoryStyles.section}>
       <View style={categoryStyles.sectionHeader}>
-        <Text style={categoryStyles.categoryTitle}>
-          Categories
-        </Text>
-        <TouchableOpacity>
-          <Text style={categoryStyles.seeAll}>
-            See all
-          </Text>
+        <Text style={categoryStyles.categoryTitle}>Categories</Text>
+
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate("HomeCategoriesSeeall")}
+        >
+          <Text style={categoryStyles.seeAll}>See all</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {categories.map((item) => {
-          const active =
-            activeCategory === item.label;
-
+          const active = activeCategory === item.label;
           const scale = useRef(new Animated.Value(1)).current;
 
-          const handlePressIn = () => {
+          const animateIn = () => {
             Animated.spring(scale, {
-              toValue: 0.96,
+              toValue: 0.94,
+              friction: 4,
               useNativeDriver: true,
             }).start();
           };
 
-          const handlePressOut = () => {
+          const animateOut = () => {
             Animated.spring(scale, {
               toValue: 1,
+              friction: 4,
               useNativeDriver: true,
             }).start();
           };
@@ -76,22 +65,18 @@ function HomeCategories({ activeCategory, setActiveCategory }) {
             >
               <TouchableOpacity
                 activeOpacity={0.9}
-                onPressIn={handlePressIn}
-                onPressOut={handlePressOut}
-                onPress={() =>
-                  setActiveCategory(item.label)
-                }
+                onPressIn={animateIn}
+                onPressOut={animateOut}
+                onPress={() => setActiveCategory(item.label)}
                 style={[
                   categoryStyles.categoryCard,
-                  active &&
-                    categoryStyles.activeCategoryCard,
+                  active && categoryStyles.activeCategoryCard,
                 ]}
               >
                 <Text
                   style={[
                     categoryStyles.categoryText,
-                    active &&
-                      categoryStyles.activeCategoryText,
+                    active && categoryStyles.activeCategoryText,
                   ]}
                 >
                   {item.label}
@@ -112,10 +97,7 @@ function HomeCategories({ activeCategory, setActiveCategory }) {
 }
 
 const categoryStyles = StyleSheet.create({
-  section: {
-    paddingHorizontal: 24,
-    marginTop: 30,
-  },
+  section: { paddingHorizontal: 24, marginTop: 30 },
 
   sectionHeader: {
     flexDirection: "row",
@@ -123,15 +105,9 @@ const categoryStyles = StyleSheet.create({
     marginBottom: 18,
   },
 
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
+  categoryTitle: { fontSize: 18, fontWeight: "600" },
 
-  seeAll: {
-    color: "#10B981",
-    fontWeight: "500",
-  },
+  seeAll: { color: "#10B981", fontWeight: "500" },
 
   categoryCard: {
     flexDirection: "row",
@@ -156,9 +132,7 @@ const categoryStyles = StyleSheet.create({
     color: "#111827",
   },
 
-  activeCategoryText: {
-    color: "#065F46",
-  },
+  activeCategoryText: { color: "#065F46" },
 
   categoryImage: {
     width: 20,
@@ -166,8 +140,6 @@ const categoryStyles = StyleSheet.create({
     marginLeft: 8,
   },
 });
-
-
 
 /* =========================
    SECOND CODE (BOTTOM SECTION)
@@ -229,9 +201,10 @@ const products = [
 ];
 
 function ProductSection() {
+  const navigation = useNavigation();
+
   return (
     <View style={{ marginTop: 20 }}>
-
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -245,35 +218,85 @@ function ProductSection() {
       </ScrollView>
 
       <View style={productStyles.grid}>
-        {products.map((item) => (
-          <View key={item.id} style={productStyles.card}>
+        {products.map((item) => {
+          const scale = useRef(new Animated.Value(1)).current;
 
-            {item.backSoon && (
-              <View style={productStyles.badge}>
-                <Text style={productStyles.badgeText}>Back soon</Text>
-              </View>
-            )}
+          const pressIn = () => {
+            Animated.spring(scale, {
+              toValue: 0.96,
+              friction: 5,
+              useNativeDriver: true,
+            }).start();
+          };
 
-            <View style={productStyles.imageContainer}>
-              <Image
-                source={item.image}
-                style={productStyles.productImage}
-                resizeMode="contain"
-              />
+          const pressOut = () => {
+            Animated.spring(scale, {
+              toValue: 1,
+              friction: 5,
+              useNativeDriver: true,
+            }).start();
+          };
 
-              <TouchableOpacity style={productStyles.plusBtn}>
-                <Ionicons name="add" size={16} color="#10B981" />
+          return (
+            <Animated.View
+              key={item.id}
+              style={[
+                productStyles.card,
+                { transform: [{ scale }] },
+              ]}
+            >
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPressIn={pressIn}
+                onPressOut={pressOut}
+                onPress={() =>
+                  navigation.navigate("ProductDetails", {
+                    product: item,
+                  })
+                }
+              >
+                {item.backSoon && (
+                  <View style={productStyles.badge}>
+                    <Text style={productStyles.badgeText}>
+                      Back soon
+                    </Text>
+                  </View>
+                )}
+
+                <View style={productStyles.imageContainer}>
+                  <Image
+                    source={item.image}
+                    style={productStyles.productImage}
+                    resizeMode="contain"
+                  />
+
+                  <TouchableOpacity style={productStyles.plusBtn}>
+                    <Ionicons
+                      name="add"
+                      size={16}
+                      color="#10B981"
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={productStyles.price}>
+                  {item.price}
+                </Text>
+                <Text style={productStyles.name}>
+                  {item.name}
+                </Text>
+                <Text style={productStyles.perKg}>
+                  {item.perKg}
+                </Text>
               </TouchableOpacity>
-            </View>
-
-            <Text style={productStyles.price}>{item.price}</Text>
-            <Text style={productStyles.name}>{item.name}</Text>
-            <Text style={productStyles.perKg}>{item.perKg}</Text>
-          </View>
-        ))}
+            </Animated.View>
+          );
+        })}
       </View>
 
-      <TouchableOpacity style={{ alignSelf: "center", marginTop: 20 }}>
+      <TouchableOpacity
+        style={{ alignSelf: "center", marginTop: 20 }}
+      >
         <Text style={productStyles.seeMore}>See more</Text>
       </TouchableOpacity>
     </View>
@@ -281,15 +304,9 @@ function ProductSection() {
 }
 
 const productStyles = StyleSheet.create({
-  subTab: {
-    marginRight: 20,
-    paddingBottom: 8,
-  },
+  subTab: { marginRight: 20, paddingBottom: 8 },
 
-  subTabText: {
-    fontSize: 15,
-    color: "#6B7280",
-  },
+  subTabText: { fontSize: 15, color: "#6B7280" },
 
   grid: {
     flexDirection: "row",
@@ -299,10 +316,7 @@ const productStyles = StyleSheet.create({
     marginTop: 20,
   },
 
-  card: {
-    width: "31%",
-    marginBottom: 24,
-  },
+  card: { width: "31%", marginBottom: 24 },
 
   imageContainer: {
     backgroundColor: "#F9FAFB",
@@ -313,10 +327,7 @@ const productStyles = StyleSheet.create({
     position: "relative",
   },
 
-  productImage: {
-    width: 70,
-    height: 70,
-  },
+  productImage: { width: 70, height: 70 },
 
   plusBtn: {
     position: "absolute",
@@ -330,11 +341,7 @@ const productStyles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  price: {
-    marginTop: 8,
-    fontWeight: "600",
-    fontSize: 14,
-  },
+  price: { marginTop: 8, fontWeight: "600", fontSize: 14 },
 
   name: {
     fontSize: 13,
@@ -359,24 +366,19 @@ const productStyles = StyleSheet.create({
     zIndex: 10,
   },
 
-  badgeText: {
-    fontSize: 10,
-    color: "#6B7280",
-  },
+  badgeText: { fontSize: 10, color: "#6B7280" },
 
-  seeMore: {
-    color: "#10B981",
-    fontWeight: "600",
-  },
+  seeMore: { color: "#10B981", fontWeight: "600" },
 });
-
-
 
 /* =========================
    EXPORT MAIN SCREEN
 ========================= */
 
-export default function CombinedScreen({ activeCategory, setActiveCategory }) {
+export default function CombinedScreen({
+  activeCategory,
+  setActiveCategory,
+}) {
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <HomeCategories

@@ -16,7 +16,7 @@ import WalletBalanceScreen from "./components/WalletBalanceScreen";
 import CashBackIcon from "../assets/CashBack.png";
 import ReferalIcon from "../assets/Referrals.png";
 import SubIcon from "../assets/Subscriptions.png";
-import api from "../api/api";
+import api from "../api/axios";
 
 // Transaction icons 
 import cardoneImg from "../assets/card-one.png";

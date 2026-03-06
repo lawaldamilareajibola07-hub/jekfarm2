@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -7,79 +7,121 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  Image,
   SafeAreaView,
   ScrollView,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { FontAwesome as Icon } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import Menu from "../assets/menu.png";
+import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import * as SecureStore from "expo-secure-store"; // <- added for token storage
 
 const CreateAccountScreen = () => {
   const navigation = useNavigation();
-  const [phone, setPhone] = useState("");
+  const scrollRef = useRef();
 
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [referralCode, setReferralCode] = useState(""); // 👈 referral state
-  const [showPassword, setShowPassword] = useState(false); // 👈 toggle state
+  const [role, setRole] = useState("customer");
+  const [market, setMarket] = useState("");
+  const [bvn, setBvn] = useState("");
+  const [dob, setDob] = useState("");
+  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // State for user type, defaulted to 'customer'
-  const [userType, setUserType] = useState("customer");
+  const validateEmail = (value) => /\S+@\S+\.\S+/.test(value);
+
+  const getPasswordStrength = () => {
+    if (password.length < 6) return 1;
+    if (password.match(/^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,}$/))
+      return 3;
+    return 2;
+  };
+
+  const validate = () => {
+    let newErrors = {};
+    if (!firstName.trim()) newErrors.firstName = "First name is required";
+    if (!lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!email.trim()) newErrors.email = "Email is required";
+    else if (!validateEmail(email)) newErrors.email = "Invalid email";
+    if (!phone.trim()) newErrors.phone = "Phone is required";
+    if (!password.trim()) newErrors.password = "Password required";
+    if (!bvn || bvn.length !== 11) newErrors.bvn = "BVN must be 11 digits";
+    if (!dob) newErrors.dob = "Date of birth required";
+    if ((role === "farmer" || role === "vendor") && !market.trim())
+      newErrors.market = "Market required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleCreate = async () => {
-    console.log("SENDING DATA TO BACKEND:", {
-      email,
-      type: userType // This should show 'farmer' if selected
-    });
-
-    if (!fullName || !email || !password || !phone) {
-      Alert.alert("Error", "All fields are required!");
-      return;
-    }
-
-    // Check if userType has been selected, though it's defaulted now
-    if (!userType) {
-      Alert.alert(
-        "Error",
-        "Please select an account type (Customer or Farmer)."
-      );
-      return;
-    }
+    if (!validate()) return;
 
     try {
       setLoading(true);
+
+      const requestBody = {
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        phone,
+        password,
+        role,
+        market: role === "farmer" || role === "vendor" ? market : null,
+        bvn,
+        dob,
+      };
+
+      console.log("🚀 SENDING REGISTER REQUEST:", requestBody);
+
       const response = await fetch(
-        "https://jekfarms.com.ng/auth/register.php?action=send-otp",
+        "https://preprodbackend.agreonpay.com.ng/api/userManager/register",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: fullName,
-            email: email,
-            password: password,
-            phone: phone,
-            type: userType,
-            referral_code: referralCode,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
         }
       );
 
-      const data = await response.json();
-      console.log("API Response:", data);
+      console.log("📡 RESPONSE STATUS:", response.status);
 
-      if (data.status === "otp_sent") {
-        Alert.alert("Success", data.message);
-        navigation.replace("ConfirmOTP", { token: data.token, email: email });
+      const text = await response.text();
+      console.log("📩 RAW RESPONSE:", text);
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.log("❌ JSON PARSE ERROR:", parseError);
+        Alert.alert("Error", "Invalid server response");
+        return;
+      }
+
+      console.log("✅ PARSED RESPONSE:", data);
+
+      if (data.status === "success") {
+        const token = data.data.token;
+        await SecureStore.setItemAsync("token", token); // store token securely
+        Alert.alert("Success", data.message, [
+          {
+            text: "Continue",
+            onPress: () => navigation.replace("Dashboard"), // navigate to main screen
+          },
+        ]);
       } else {
-        Alert.alert("Error", data.message || "Something went wrong");
+        Alert.alert("Error", data.message || "Registration failed");
       }
     } catch (error) {
-      console.error(error);
+      console.log("🔥 NETWORK ERROR:", error);
       Alert.alert("Error", "Unable to connect to server");
     } finally {
       setLoading(false);
@@ -88,144 +130,118 @@ const CreateAccountScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.topSection}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Icon name="arrow-left" size={20} color="#fff" />
-          </TouchableOpacity>
-          <View style={styles.logoCircle}>
-            <Icon name="leaf" size={30} color="#fff" />
-          </View>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join the Jekfarm community</Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Account Type</Text>
-          {/* User Type Selector */}
-          <View style={styles.userTypeContainer}>
-            <TouchableOpacity
-              style={[
-                styles.userTypeButton,
-                userType === "customer" && styles.selectedButton,
-              ]}
-              onPress={() => setUserType("customer")}
-              disabled={loading}
-            >
-              <Text
-                style={
-                  userType === "customer"
-                    ? styles.selectedText
-                    : styles.unselectedText
-                }
-              >
-                Customer
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.userTypeButton,
-                userType === "farmer" && styles.selectedButton,
-              ]}
-              onPress={() => setUserType("farmer")}
-              disabled={loading}
-            >
-              <Text
-                style={
-                  userType === "farmer"
-                    ? styles.selectedText
-                    : styles.unselectedText
-                }
-              >
-                Farmer
-              </Text>
-            </TouchableOpacity>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView
+          ref={scrollRef}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 60 }}
+        >
+          <View style={styles.topSection}>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Secure KYC Registration</Text>
           </View>
 
-          <View style={styles.formSection}>
-            <View style={styles.inputWrapper}>
-              <Text style={styles.label}>Full Name</Text>
-              <View style={styles.inputContainerStyle}>
-                <Icon name="user" size={18} color="#9ca3af" style={styles.fieldIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="John Doe"
-                  value={fullName}
-                  onChangeText={setFullName}
-                />
+          <View style={styles.card}>
+            {/* ROLE PICKER */}
+            <View style={{ marginBottom: 22 }}>
+              <Text style={styles.staticLabel}>Select Role</Text>
+              <View style={styles.pickerContainer}>
+                <Picker selectedValue={role} onValueChange={setRole}>
+                  <Picker.Item label="Customer" value="customer" />
+                  <Picker.Item label="Farmer" value="farmer" />
+                  <Picker.Item label="Vendor" value="vendor" />
+                </Picker>
               </View>
             </View>
 
-            <View style={styles.inputWrapper}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputContainerStyle}>
-                <Icon name="envelope" size={18} color="#9ca3af" style={styles.fieldIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="john@example.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  value={email}
-                  onChangeText={setEmail}
-                />
-              </View>
-            </View>
+            <FloatingInput
+              label="First Name"
+              value={firstName}
+              onChangeText={setFirstName}
+              error={errors.firstName}
+            />
+            <FloatingInput
+              label="Last Name"
+              value={lastName}
+              onChangeText={setLastName}
+              error={errors.lastName}
+            />
+            <FloatingInput
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              error={errors.email}
+            />
+            <FloatingInput
+              label="Phone"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              maxLength={11}
+              error={errors.phone}
+            />
 
-            <View style={styles.inputWrapper}>
-              <Text style={styles.label}>Phone Number</Text>
-              <View style={styles.inputContainerStyle}>
-                <Icon name="phone" size={18} color="#9ca3af" style={styles.fieldIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="08012345678"
-                  keyboardType="phone-pad"
-                  value={phone}
-                  onChangeText={setPhone}
-                  maxLength={11}
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputWrapper}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.inputContainerStyle}>
-                <Icon name="lock" size={18} color="#9ca3af" style={styles.fieldIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="••••••••"
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  <Icon
-                    name={showPassword ? "eye" : "eye-slash"}
-                    size={18}
-                    color="#9ca3af"
-                  />
+            <FloatingInput
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              error={errors.password}
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Icon name={showPassword ? "eye" : "eye-slash"} size={18} color="#9ca3af" />
                 </TouchableOpacity>
-              </View>
-            </View>
+              }
+            />
 
-            <View style={styles.inputWrapper}>
-              <Text style={styles.label}>Referral Code (Optional)</Text>
-              <View style={styles.inputContainerStyle}>
-                <Icon name="gift" size={18} color="#9ca3af" style={styles.fieldIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="JKF-123456"
-                  autoCapitalize="characters"
-                  value={referralCode}
-                  onChangeText={setReferralCode}
+            <PasswordStrengthBar strength={getPasswordStrength()} />
+
+            {(role === "farmer" || role === "vendor") && (
+              <FloatingInput
+                label="Market"
+                value={market}
+                onChangeText={setMarket}
+                error={errors.market}
+              />
+            )}
+
+            <FloatingInput
+              label="BVN (11 digits)"
+              value={bvn}
+              onChangeText={setBvn}
+              keyboardType="number-pad"
+              maxLength={11}
+              error={errors.bvn}
+            />
+
+            {/* DATE PICKER */}
+            <View style={{ marginBottom: 22 }}>
+              <Text style={styles.staticLabel}>Date of Birth</Text>
+              <TouchableOpacity
+                style={styles.dateBox}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text>{dob || "Select Date"}</Text>
+              </TouchableOpacity>
+              {errors.dob && <Text style={styles.errorText}>{errors.dob}</Text>}
+              {showDatePicker && (
+                <DateTimePicker
+                  value={dob ? new Date(dob) : new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker(false);
+                    if (selectedDate) {
+                      setDob(selectedDate.toISOString().split("T")[0]);
+                    }
+                  }}
                 />
-              </View>
+              )}
             </View>
 
             <TouchableOpacity
@@ -239,189 +255,140 @@ const CreateAccountScreen = () => {
                 <Text style={styles.createText}>Create Account</Text>
               )}
             </TouchableOpacity>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account?</Text>
-              <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-                <Text style={styles.loginLink}>Login</Text>
-              </TouchableOpacity>
-            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+};
+
+/* Floating Input Component */
+const FloatingInput = ({
+  label,
+  value,
+  onChangeText,
+  error,
+  keyboardType,
+  secureTextEntry,
+  maxLength,
+  rightIcon,
+}) => {
+  const animated = useRef(new Animated.Value(value ? 1 : 0)).current;
+
+  const handleFocus = () => {
+    Animated.timing(animated, { toValue: 1, duration: 200, useNativeDriver: false }).start();
+  };
+
+  const handleBlur = () => {
+    if (!value) {
+      Animated.timing(animated, { toValue: 0, duration: 200, useNativeDriver: false }).start();
+    }
+  };
+
+  const labelStyle = {
+    position: "absolute",
+    left: 16,
+    top: animated.interpolate({ inputRange: [0, 1], outputRange: [18, -8] }),
+    fontSize: animated.interpolate({ inputRange: [0, 1], outputRange: [15, 12] }),
+    color: "#6b7280",
+    backgroundColor: "#fff",
+    paddingHorizontal: 4,
+  };
+
+  return (
+    <View style={{ marginBottom: 22 }}>
+      <View style={styles.inputContainer}>
+        <Animated.Text style={labelStyle}>{label}</Animated.Text>
+        <TextInput
+          style={styles.input}
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType={keyboardType}
+          secureTextEntry={secureTextEntry}
+          maxLength={maxLength}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
+        {rightIcon}
+      </View>
+      {error && <Text style={styles.errorText}>{error}</Text>}
+    </View>
+  );
+};
+
+const PasswordStrengthBar = ({ strength }) => {
+  const width = ["33%", "66%", "100%"][strength - 1] || "33%";
+  const color = ["#ef4444", "#f59e0b", "#10b981"][strength - 1] || "#ef4444";
+
+  return (
+    <View style={{ marginBottom: 20 }}>
+      <View style={styles.strengthBarBackground}>
+        <View style={[styles.strengthBarFill, { width, backgroundColor: color }]} />
+      </View>
+    </View>
   );
 };
 
 export default CreateAccountScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
+  container: { flex: 1, backgroundColor: "#f9fafb" },
   topSection: {
     backgroundColor: "#10b981",
     paddingTop: 60,
     paddingBottom: 40,
-    paddingHorizontal: 24,
+    alignItems: "center",
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
-    alignItems: "center",
   },
-  backButton: {
-    position: "absolute",
-    top: 50,
-    left: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logoCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-    elevation: 4,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#fff",
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: "rgba(255, 255, 255, 0.8)",
-  },
+  title: { fontSize: 26, fontWeight: "800", color: "#fff" },
+  subtitle: { fontSize: 15, color: "rgba(255,255,255,0.9)" },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 30,
     marginTop: -30,
     marginHorizontal: 20,
     padding: 24,
+    backgroundColor: "#fff",
+    borderRadius: 30,
     elevation: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    borderWidth: 1,
-    borderColor: "#f0fdf4",
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#374151",
-    marginBottom: 12,
-    marginLeft: 4,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  userTypeContainer: {
-    flexDirection: "row",
-    marginBottom: 24,
-    backgroundColor: "#f3f4f6",
+  staticLabel: { fontSize: 14, fontWeight: "600", marginBottom: 8 },
+  pickerContainer: {
+    borderWidth: 1.5,
     borderRadius: 16,
-    padding: 6,
+    borderColor: "#e5e7eb",
   },
-  userTypeButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  selectedButton: {
-    backgroundColor: "#10b981",
-  },
-  unselectedText: {
-    color: "#6b7280",
-    fontWeight: "600",
-    fontSize: 15,
-  },
-  selectedText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  formSection: {
-    width: "100%",
-  },
-  inputWrapper: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  inputContainerStyle: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 56,
-    backgroundColor: "#f8fafc",
+  dateBox: {
+    borderWidth: 1.5,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: "#e5e7eb",
+    padding: 16,
+  },
+  inputContainer: {
+    borderWidth: 1.5,
+    borderRadius: 16,
     paddingHorizontal: 16,
+    paddingTop: 18,
+    height: 60,
+    justifyContent: "center",
   },
-  fieldIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    height: "100%",
-    fontSize: 15,
-    color: "#1e293b",
-    fontWeight: "500",
-  },
-  eyeIcon: {
-    padding: 8,
-  },
+  input: { flex: 1, fontSize: 15 },
   createButton: {
     backgroundColor: "#10b981",
     height: 56,
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 12,
-    elevation: 4,
-    shadowColor: "#10b981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    marginTop: 10,
   },
-  createText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.5,
+  createText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  errorText: { color: "#ef4444", fontSize: 13, marginTop: 4 },
+  strengthBarBackground: {
+    height: 6,
+    backgroundColor: "#e5e7eb",
+    borderRadius: 4,
   },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 24,
-  },
-  footerText: {
-    color: "#64748b",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  loginLink: {
-    color: "#10b981",
-    fontSize: 14,
-    fontWeight: "700",
-    marginLeft: 6,
+  strengthBarFill: {
+    height: 6,
+    borderRadius: 4,
   },
 });

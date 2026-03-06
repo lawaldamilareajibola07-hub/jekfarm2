@@ -18,21 +18,39 @@ import {
 import { FontAwesome as Icon } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../api/api";
+import api from "../api/axios";
 
 const LoginScreen = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false); // ✅ NEW
   const [loading, setLoading] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
-  // Animation refs
-  const logoScale = useRef(new Animated.Value(1.4)).current; // start bigger
+  const logoScale = useRef(new Animated.Value(1.4)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const titleTranslate = useRef(new Animated.Value(30)).current;
+
+  /* =============================
+     LOAD SAVED CREDENTIALS
+  ============================== */
+  useEffect(() => {
+    const loadSavedCredentials = async () => {
+      const savedEmail = await AsyncStorage.getItem("remember_email");
+      const savedPassword = await AsyncStorage.getItem("remember_password");
+
+      if (savedEmail && savedPassword) {
+        setEmail(savedEmail);
+        setPassword(savedPassword);
+        setRememberMe(true);
+      }
+    };
+
+    loadSavedCredentials();
+  }, []);
 
   useEffect(() => {
     Animated.sequence([
@@ -67,22 +85,15 @@ const LoginScreen = () => {
     ]).start();
   }, []);
 
-  // Listen for keyboard show/hide
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      () => {
-        setKeyboardVisible(true);
-      }
+      () => setKeyboardVisible(true)
     );
-
     const keyboardDidHideListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => {
-        setKeyboardVisible(false);
-      }
+      () => setKeyboardVisible(false)
     );
-
     return () => {
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
@@ -97,35 +108,46 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      const res = await api.post("auth/login.php", {
-        identifier: email,
+      const res = await api.post("/userManager/login", {
+        login: email,
         password,
       });
+
       const data = res.data;
 
       if (data.status === "success") {
         const userData = {
-          ...data.user,
-          role: data.user.role || data.user.type || "customer",
-          wallet_balance: data.user.wallet_balance
-            ? parseFloat(data.user.wallet_balance)
+          ...data.data.user,
+          role: data.data.user.role || data.data.user.type || "customer",
+          wallet_balance: data.data.user.wallet_balance
+            ? parseFloat(data.data.user.wallet_balance)
             : 0,
-          balance: data.user.wallet_balance
-            ? parseFloat(data.user.wallet_balance)
+          balance: data.data.user.wallet_balance
+            ? parseFloat(data.data.user.wallet_balance)
             : 0,
-          wallet_balance_string: data.user.wallet_balance || "0.00",
-          kyc_complete: data.user.kyc_complete || false,
-          has_nin: data.user.has_nin || false,
-          has_bvn: data.user.has_bvn || false,
+          wallet_balance_string: data.data.user.wallet_balance || "0.00",
+          kyc_complete: data.data.user.kyc_complete || false,
+          has_nin: data.data.user.has_nin || false,
+          has_bvn: data.data.user.has_bvn || false,
         };
 
         await AsyncStorage.setItem("user", JSON.stringify(userData));
 
-        const token =
-          data.session || data.token || data.user?.session_id;
+        const token = data.data.token || data.data.user?.session_id;
         if (token) {
           await AsyncStorage.setItem("token", token);
           await AsyncStorage.setItem("session_cookie", token);
+        }
+
+        /* =============================
+           SAVE OR CLEAR CREDENTIALS
+        ============================== */
+        if (rememberMe) {
+          await AsyncStorage.setItem("remember_email", email);
+          await AsyncStorage.setItem("remember_password", password);
+        } else {
+          await AsyncStorage.removeItem("remember_email");
+          await AsyncStorage.removeItem("remember_password");
         }
 
         const userRole = userData.role.toLowerCase();
@@ -149,10 +171,10 @@ const LoginScreen = () => {
           "No internet connection. Please check your network settings and try again.";
       } else if (err.response) {
         errorMessage =
-          err.response.data?.message ||
-          "Server error. Please try again later.";
+          err.response.data?.message || "Server error. Please try again later.";
       }
 
+      console.log("🔥 LOGIN ERROR:", err.response?.data || err);
       Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
@@ -213,7 +235,6 @@ const LoginScreen = () => {
                   <TextInput
                     style={styles.input}
                     placeholder="Ex. john@example.com"
-                    keyboardType="email-address"
                     autoCapitalize="none"
                     value={email}
                     onChangeText={setEmail}
@@ -250,12 +271,28 @@ const LoginScreen = () => {
                 </View>
               </View>
 
+              {/* ✅ REMEMBER ME */}
               <TouchableOpacity
-                onPress={() => navigation.navigate("Fbpass")}
-                style={styles.forgotPasswordLink}
+                onPress={() => setRememberMe(!rememberMe)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 20,
+                }}
               >
-                <Text style={styles.forgotPasswordText}>
-                  Forgot Password?
+                <Icon
+                  name={rememberMe ? "check-square" : "square-o"}
+                  size={18}
+                  color="#10b981"
+                />
+                <Text
+                  style={{
+                    marginLeft: 8,
+                    color: "#374151",
+                    fontWeight: "500",
+                  }}
+                >
+                  Remember Me
                 </Text>
               </TouchableOpacity>
 
@@ -271,25 +308,6 @@ const LoginScreen = () => {
                 )}
               </TouchableOpacity>
             </View>
-          </View>
-
-          <View style={{ marginTop: 12, alignItems: "center" }}>
-            <Text style={{ color: "#6b7280" }}>
-              Don't have an account?
-            </Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Signup")}
-            >
-              <Text
-                style={{
-                  color: "#10b981",
-                  fontWeight: "600",
-                  marginTop: 6,
-                }}
-              >
-                Sign up
-              </Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

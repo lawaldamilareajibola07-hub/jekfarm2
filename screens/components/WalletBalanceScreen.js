@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../../api/api';
+import api from '../../api/axios';
 import useravatar from "../../assets/useravatar.png";
 import notification from "../../assets/direct-notification.png";
 import recieveImg from "../../assets/Receive.png";

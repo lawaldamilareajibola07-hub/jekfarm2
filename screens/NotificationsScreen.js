@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../api/api";
+import api from "../api/axios";
 import { useNavigation } from "@react-navigation/native";
 
 const NotificationsScreen = () => {

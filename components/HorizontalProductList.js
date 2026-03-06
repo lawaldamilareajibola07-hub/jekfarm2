@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, FlatList, Image, TouchableOpacity } from "react-native";
-import { useCart } from "../CartContext";
+import { useCart } from "../context/CartContext";
 import AddToast from "./AddToast";
 
 const products = [
