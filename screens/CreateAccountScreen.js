@@ -84,7 +84,7 @@ const CreateAccountScreen = () => {
       console.log("🚀 SENDING REGISTER REQUEST:", requestBody);
 
       const response = await fetch(
-        "https://preprodbackend.agreonpay.com.ng/api/userManager/register",
+        "https://productionbackend2.agreonpay.com.ng/api/userManager/register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

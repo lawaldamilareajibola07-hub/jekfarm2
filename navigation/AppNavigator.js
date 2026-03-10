@@ -56,7 +56,9 @@ import ShoppingCartScreen from "../screens/components/ShoppingCart.js";
 import HomeCategoriesSeeall from "../screens/components/HomeCategoriesSeeall";
 import CustomerSupport from "../screens/CustomerSupport";
 import AgricNovaAI from "../screens/AgricNovaAI";
-
+import WithdrawScreen from "../screens/withdraw/WithdrawScreen";
+import ConfirmWithdrawScreen from "../screens/withdraw/ConfirmWithdrawScreen";
+import WithdrawSuccessScreen from "../screens/withdraw/WithdrawSuccessScreen";
 // Tab Navigators
 import MainTabNavigator from "../components/MainTabNavigator";
 import FarmerTabNavigator from "../components/FarmerTabNavigator";
@@ -110,6 +112,32 @@ export default function AppNavigator() {
       <Stack.Screen name="SendCryptoScreen" component={SendCryptoScreen} />
       <Stack.Screen name="FundWallet" component={FundWalletScreen} />
       <Stack.Screen name="CreateVirtualAccount" component={CreateVirtualAccountScreen} />
+      <Stack.Screen name="Withdraw"
+  component={WithdrawScreen}
+  options={{ headerShown: false }}
+/>
+<Stack.Screen
+ name="WithdrawPin"
+ component={WithdrawPinScreen}
+/>
+<Stack.Screen
+ name="WithdrawReview"
+ component={WithdrawReviewScreen}
+/>
+<Stack.Screen
+ name="SetTransactionPin"
+ component={SetTransactionPinScreen}
+/>
+<Stack.Screen
+  name="ConfirmWithdraw"
+  component={ConfirmWithdrawScreen}
+  options={{ headerShown: false }}
+/>
+<Stack.Screen
+  name="WithdrawSuccess"
+  component={WithdrawSuccessScreen}
+  options={{ headerShown: false }}
+/>
       <Stack.Screen name="PersonnalInformation" component={PersonnalInformation} />
       <Stack.Screen name="JobInformation" component={JobInformation} />
       <Stack.Screen name="EmergencyContacts" component={EmergencyContacts} />

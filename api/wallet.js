@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 // -------------------------
 // Base URL (adjust per environment)
 // -------------------------
-const BASE_URL = "https://preprodbackend.agreonpay.com.ng/api"; // change for local/dev
+const BASE_URL = "https://productionbackend2.agreonpay.com.ng/api"; // change for local/dev
 
 // -------------------------
 // Helper: get Authorization header
@@ -139,8 +139,3 @@ export const initiateWalletFunding = async () => {
     data: va.data,
   };
 };
-
-// -------------------------
-// Backward-compatible aliases
-// -------------------------
-export const createVirtualAccount = getOrCreateVirtualAccount;
