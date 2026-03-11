@@ -1,75 +1,139 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  ActivityIndicator,
+  Keyboard,
+  Alert,
 } from "react-native";
 
 import Animated, { FadeInDown, FadeInUp, Layout } from "react-native-reanimated";
 
-const ConfirmWithdrawScreen = ({ route, navigation }) => {
-  const { amount, bankCode, accountNumber, accountName } = route.params;
+import PinInput from "../../components/security/PinInput";
+import { confirmWithdrawal } from "../../api/withdraw";
 
-  const handleContinue = () => {
-    // Pass all necessary params to OTP screen
-    navigation.navigate("WithdrawOtp", {
-      amount,
-      bankCode,
-      accountNumber,
-      accountName,
-    });
+export default function ConfirmWithdrawScreenPin({ route, navigation }) {
+
+  const {
+    reference,
+    amount,
+    bankName,
+    accountNumber,
+    accountName,
+  } = route.params;
+
+  const [pin, setPin] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const submitWithdrawal = async () => {
+    if (!reference || loading) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await confirmWithdrawal(reference, pin);
+
+      if (res.status === "success") {
+        const { status, reference: txRef } = res.data;
+
+        switch (status) {
+          case "success":
+            navigation.replace("WithdrawSuccess", {
+              reference: txRef,
+              amount,
+              bankName,
+              accountNumber,
+            });
+            break;
+          case "processing":
+            Alert.alert("Processing", "Your withdrawal is processing.");
+            navigation.popToTop();
+            break;
+          case "queued":
+            Alert.alert("Queued", "Withdrawal queued. Please retry later.");
+            navigation.popToTop();
+            break;
+          case "reversed":
+            Alert.alert("Failed", "Withdrawal reversed. Funds returned.");
+            navigation.popToTop();
+            break;
+          default:
+            setError("Unknown withdrawal status");
+            setPin("");
+        }
+      } else {
+        setError(res.message || "Invalid transaction PIN");
+        setPin("");
+      }
+    } catch (err) {
+      console.log("Confirm withdrawal error:", err);
+      setError("Invalid PIN or network issue");
+      setPin("");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Format amount with commas
-  const formatAmount = (amt) => {
-    if (!amt) return "";
-    return amt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
+  // Auto-submit when PIN reaches 6 digits
+  useEffect(() => {
+    if (pin.length === 6 && !loading) {
+      submitWithdrawal();
+    }
+  }, [pin]);
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(500)}
+      entering={FadeInDown.duration(400)}
       style={styles.container}
     >
-      <Text style={styles.title}>Confirm Withdrawal</Text>
+      <Animated.View layout={Layout.springify()}>
 
-      <Animated.View layout={Layout.springify()} entering={FadeInUp.delay(100)}>
-        <View style={styles.card}>
-          <Text style={styles.label}>Amount</Text>
-          <Text style={styles.value}>₦{formatAmount(amount)}</Text>
-        </View>
+        <Animated.Text
+          entering={FadeInUp.duration(400)}
+          style={styles.title}
+        >
+          Confirm Withdrawal
+        </Animated.Text>
+
+        <Animated.Text
+          entering={FadeInUp.delay(100)}
+          style={styles.subtitle}
+        >
+          Amount: ₦{Number(amount).toLocaleString()}{"\n"}
+          Bank: {bankName}{"\n"}
+          Account: {accountNumber} - {accountName}
+        </Animated.Text>
+
+        {/* PIN Input */}
+        <PinInput
+          pin={pin}
+          setPin={setPin}
+        />
+
+        {loading && (
+          <ActivityIndicator
+            size="large"
+            color="#22c55e"
+            style={{ marginTop: 20 }}
+          />
+        )}
+
+        {error !== "" && !loading && (
+          <Animated.Text
+            entering={FadeInUp.duration(400)}
+            style={styles.error}
+          >
+            {error}
+          </Animated.Text>
+        )}
+
       </Animated.View>
-
-      <Animated.View layout={Layout.springify()} entering={FadeInUp.delay(200)}>
-        <View style={styles.card}>
-          <Text style={styles.label}>Account Number</Text>
-          <Text style={styles.value}>{accountNumber}</Text>
-        </View>
-      </Animated.View>
-
-      <Animated.View layout={Layout.springify()} entering={FadeInUp.delay(300)}>
-        <View style={styles.card}>
-          <Text style={styles.label}>Account Name</Text>
-          <Text style={styles.value}>{accountName}</Text>
-        </View>
-      </Animated.View>
-
-      <Animated.View layout={Layout.springify()} entering={FadeInUp.delay(400)}>
-        <View style={styles.card}>
-          <Text style={styles.label}>Bank Code</Text>
-          <Text style={styles.value}>{bankCode}</Text>
-        </View>
-      </Animated.View>
-
-      <TouchableOpacity style={styles.button} onPress={handleContinue} activeOpacity={0.8}>
-        <Text style={styles.buttonText}>Proceed to OTP</Text>
-      </TouchableOpacity>
     </Animated.View>
   );
-};
-
-export default ConfirmWithdrawScreen;
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -78,43 +142,27 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: "center",
   },
+
   title: {
     fontSize: 26,
-    color: "#fff",
-    marginBottom: 30,
-    fontWeight: "bold",
+    fontWeight: "700",
+    color: "#22c55e",
     textAlign: "center",
+    marginBottom: 10,
   },
-  card: {
-    backgroundColor: "#1e293b",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  label: {
-    color: "#94a3b8",
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  value: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "500",
-  },
-  button: {
-    backgroundColor: "#22c55e",
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 30,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
+
+  subtitle: {
     fontSize: 16,
+    color: "#cbd5f5",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+
+  error: {
+    color: "#ef4444",
+    textAlign: "center",
+    marginTop: 15,
+    fontSize: 14,
   },
 });

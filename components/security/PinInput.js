@@ -1,21 +1,56 @@
-import React, { useRef } from "react";
-import { View, TextInput, StyleSheet } from "react-native";
-import Animated, { FadeInUp } from "react-native-reanimated";
+import React, { useRef, useImperativeHandle, forwardRef } from "react";
+import { View, TextInput, StyleSheet, TouchableOpacity } from "react-native";
+import Animated, {
+  FadeInUp,
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 
 const PIN_LENGTH = 6;
 
-export default function PinInput({ pin, setPin }) {
+const PinInput = forwardRef(({ pin, setPin }, ref) => {
   const inputRef = useRef(null);
+  const shake = useSharedValue(0);
 
   const handleChange = (text) => {
     const value = text.replace(/[^0-9]/g, "");
+
     if (value.length <= PIN_LENGTH) {
       setPin(value);
     }
   };
 
+  const focusInput = () => {
+    inputRef.current?.focus();
+  };
+
+  // Shake animation for wrong PIN
+  const triggerError = () => {
+    shake.value = withSequence(
+      withTiming(-10, { duration: 60 }),
+      withTiming(10, { duration: 60 }),
+      withTiming(-10, { duration: 60 }),
+      withTiming(10, { duration: 60 }),
+      withTiming(0, { duration: 60 })
+    );
+  };
+
+  useImperativeHandle(ref, () => ({
+    triggerError,
+    focus: focusInput,
+  }));
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shake.value }],
+  }));
+
   return (
-    <Animated.View entering={FadeInUp.duration(400)} style={styles.container}>
+    <Animated.View
+      entering={FadeInUp.duration(400)}
+      style={[styles.container, animatedStyle]}
+    >
       {/* Hidden input */}
       <TextInput
         ref={inputRef}
@@ -27,22 +62,26 @@ export default function PinInput({ pin, setPin }) {
         autoFocus
       />
 
-      {/* PIN circles */}
-      <View style={styles.row}>
-        {[...Array(PIN_LENGTH)].map((_, index) => {
-          const filled = index < pin.length;
+      {/* Tap area */}
+      <TouchableOpacity activeOpacity={1} onPress={focusInput}>
+        <View style={styles.row}>
+          {[...Array(PIN_LENGTH)].map((_, index) => {
+            const filled = index < pin.length;
 
-          return (
-            <View
-              key={index}
-              style={[styles.circle, filled && styles.circleFilled]}
-            />
-          );
-        })}
-      </View>
+            return (
+              <Animated.View
+                key={index}
+                style={[styles.circle, filled && styles.circleFilled]}
+              />
+            );
+          })}
+        </View>
+      </TouchableOpacity>
     </Animated.View>
   );
-}
+});
+
+export default PinInput;
 
 const styles = StyleSheet.create({
   container: {

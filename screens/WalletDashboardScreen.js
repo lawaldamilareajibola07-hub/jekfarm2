@@ -9,8 +9,10 @@ import {
   TouchableOpacity,
   Text,
   Dimensions,
+  Keyboard,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import WalletBalanceCard from "./components/WalletBalanceCard";
 import QuickAccessCard from "./components/QuickAccessCard";
@@ -18,7 +20,6 @@ import TransactionItem from "./components/TransactionItem";
 import EmptyState from "./components/EmptyState";
 
 import { getWalletBalances } from "../api/wallet";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const POLL_INTERVAL = 15000;
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -34,67 +35,72 @@ const WalletDashboardScreen = () => {
   const [error, setError] = useState("");
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const quickAnim = useRef(new Animated.Value(0)).current;
   const transactionsRef = useRef([]);
   const [scrollShadow, setScrollShadow] = useState(false);
 
+  // Load virtual account state and animate Quick Access cards
   useEffect(() => {
     (async () => {
       const storedValue = await AsyncStorage.getItem("hasVirtualAccount");
       if (storedValue === "true") setHasVirtualAccount(true);
+
+      Animated.timing(quickAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }).start();
     })();
   }, []);
 
+  // Quick Access Items
   const quickAccessItems = [
     { title: "Your Cashbacks", icon: require("../assets/walletActive.png") },
-
     {
       title: "Your Referrals",
       icon: require("../assets/Referrals.png"),
       action: () => navigation.navigate("ReferralScreen"),
     },
-
     {
       title: "Withdraw",
       icon: require("../assets/walletActive.png"),
       action: () => navigation.navigate("Withdraw"),
     },
-
     {
       title: "Subscriptions",
       icon: require("../assets/Subscriptions.png"),
       action: () => navigation.navigate("Subscriptions"),
     },
-
+    {
+      title: "Set Transaction PIN",
+      icon: require("../assets/walletActive.png"),
+      action: () => navigation.navigate("SetTransactionPin"),
+    },
+    {
+      title: "Change PIN",
+      icon: require("../assets/walletActive.png"),
+      action: () => navigation.navigate("ChangePinScreen"),
+    },
     {
       title: "Products",
       icon: require("../assets/walletActive.png"),
       action: () => navigation.navigate("ProductDetails"),
     },
-
     {
       title: "Shopping Cart",
       icon: require("../assets/walletActive.png"),
       action: () => navigation.navigate("ShoppingCart"),
     },
-
     {
       title: "Checkout",
       icon: require("../assets/walletActive.png"),
       action: () => navigation.navigate("Checkout"),
     },
-
     {
       title: "Order Success",
       icon: require("../assets/walletActive.png"),
       action: () => navigation.navigate("OrderSuccess"),
     },
-
-    {
-      title: "Track Order",
-      icon: require("../assets/walletActive.png"),
-      action: () => navigation.navigate("TrackOrder"),
-    },
-
     ...(!hasVirtualAccount
       ? [
           {
@@ -115,6 +121,7 @@ const WalletDashboardScreen = () => {
       : []),
   ];
 
+  // Fetch Wallet Data
   const fetchWalletData = async () => {
     try {
       const userString = await AsyncStorage.getItem("user");
@@ -127,27 +134,22 @@ const WalletDashboardScreen = () => {
       }
 
       const response = await getWalletBalances();
-      console.log("WALLET API RESPONSE:", response);
-
       if (response && response.status === "success") {
-        const wallets = response?.data || [];
+        const wallets = response.data || [];
         const ngnWallet = wallets.find((w) => w.currency === "NGN");
         const walletBalance = parseFloat(ngnWallet?.balance || 0);
-
         setBalance(walletBalance);
 
-        const accountExists = !!(
-          ngnWallet?.account_number || ngnWallet?.accountNumber
-        );
+        const accountExists = !!(ngnWallet?.account_number || ngnWallet?.accountNumber);
         if (accountExists) {
           setHasVirtualAccount(true);
           await AsyncStorage.setItem("hasVirtualAccount", "true");
         }
 
         const walletTransactions = ngnWallet?.transactions || [];
-
         const prevIds = transactionsRef.current.map((t) => t.id);
         const newTxns = walletTransactions.filter((t) => !prevIds.includes(t.id));
+
         if (newTxns.length > 0) {
           fadeAnim.setValue(0);
           Animated.timing(fadeAnim, {
@@ -172,6 +174,7 @@ const WalletDashboardScreen = () => {
     }
   };
 
+  // Auto refresh on focus
   useFocusEffect(
     useCallback(() => {
       fetchWalletData();
@@ -192,7 +195,7 @@ const WalletDashboardScreen = () => {
 
   return (
     <View style={styles.container}>
-      
+      {/* Shopping Cart Button */}
       <TouchableOpacity
         style={styles.cartButton}
         onPress={() => navigation.navigate("ShoppingCart")}
@@ -202,19 +205,30 @@ const WalletDashboardScreen = () => {
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={["#22c55e"]}
-          />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#22c55e"]} />}
       >
+        {/* Wallet Balance */}
         <WalletBalanceCard balance={balance} loading={loading} />
 
+        {/* Quick Access Section */}
         <Text style={styles.sectionTitle}>Quick Access</Text>
-
-        <View style={[styles.quickContainer, scrollShadow && styles.quickShadow]}>
+        <Animated.View
+          style={[
+            styles.quickContainer,
+            scrollShadow && styles.quickShadow,
+            {
+              opacity: quickAnim,
+              transform: [
+                {
+                  translateY: quickAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
           <FlatList
             data={quickAccessItems}
             horizontal
@@ -225,8 +239,9 @@ const WalletDashboardScreen = () => {
             onScroll={handleScroll}
             scrollEventThrottle={16}
           />
-        </View>
+        </Animated.View>
 
+        {/* Recent Activities */}
         <View style={styles.activityHeader}>
           <Text style={styles.sectionTitle}>Recent Activities</Text>
           <TouchableOpacity>
@@ -234,6 +249,7 @@ const WalletDashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Transactions / Empty / Error */}
         {error ? (
           <View style={styles.errorCard}>
             <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
@@ -272,6 +288,7 @@ const WalletDashboardScreen = () => {
         )}
       </ScrollView>
 
+      {/* Bottom Toast Error */}
       {error && (
         <View style={styles.toast}>
           <Text style={styles.toastText}>Fetch error: {error}</Text>
@@ -283,7 +300,6 @@ const WalletDashboardScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F4F6F8" },
-
   cartButton: {
     position: "absolute",
     top: 50,
@@ -293,14 +309,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 30,
   },
-
-  cartIcon: {
-    fontSize: 18,
-    color: "#fff",
-  },
-
+  cartIcon: { fontSize: 18, color: "#fff" },
   sectionTitle: { fontSize: 18, fontWeight: "700", marginLeft: 16, marginTop: 20 },
-
   quickContainer: {
     paddingVertical: 10,
     backgroundColor: "#fff",
@@ -312,14 +322,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
-
   quickShadow: {
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 6,
     shadowOffset: { width: 2, height: 0 },
   },
-
   activityHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -327,9 +335,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 16,
   },
-
   seeAll: { color: "#16a34a", fontWeight: "600" },
-
   errorCard: {
     backgroundColor: "#fdecec",
     margin: 16,
@@ -337,20 +343,10 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "center",
   },
-
   errorTitle: { color: "#dc2626", fontSize: 16, fontWeight: "700", marginBottom: 5 },
-
   errorSub: { color: "#7f1d1d", marginBottom: 15 },
-
-  retryBtn: {
-    backgroundColor: "#22c55e",
-    paddingVertical: 10,
-    paddingHorizontal: 25,
-    borderRadius: 8,
-  },
-
+  retryBtn: { backgroundColor: "#22c55e", paddingVertical: 10, paddingHorizontal: 25, borderRadius: 8 },
   retryText: { color: "#fff", fontWeight: "600" },
-
   toast: {
     position: "absolute",
     bottom: 10,
@@ -360,7 +356,6 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
   },
-
   toastText: { color: "#fff" },
 });
 

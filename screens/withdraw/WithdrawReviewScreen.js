@@ -8,11 +8,16 @@ import {
   Alert,
 } from "react-native";
 
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+  FadeInRight,
+} from "react-native-reanimated";
 
 import { initiateWithdrawal } from "../../api/withdraw";
 
 export default function WithdrawReviewScreen({ route, navigation }) {
+
   const {
     amount,
     bankName,
@@ -23,7 +28,11 @@ export default function WithdrawReviewScreen({ route, navigation }) {
 
   const [loading, setLoading] = useState(false);
 
+  const formattedAmount = Number(amount).toLocaleString();
+
   const handleConfirm = async () => {
+    if (loading) return;
+
     setLoading(true);
 
     const payload = {
@@ -33,64 +42,123 @@ export default function WithdrawReviewScreen({ route, navigation }) {
       account_number: accountNumber,
       account_name: accountName,
       narration: "Wallet withdrawal",
-      idempotency_key: `wd-${Date.now()}`,
+      idempotency_key: `wd-${Date.now()}-${Math.random().toString(36).substring(2,8)}`,
     };
 
     try {
+
       const res = await initiateWithdrawal(payload);
 
       if (res.status === "success") {
+
+        const reference = res.data.reference;
+
         navigation.navigate("WithdrawPin", {
-          reference: res.data.reference,
+          reference,
+          amount,
+          bankName,
+          accountNumber,
+          accountName,
         });
-      }
 
+      } 
+      
       else if (res.code === "TWO_FACTOR_REQUIRED") {
-        navigation.navigate("SetTransactionPin");
-      }
 
+        Alert.alert(
+          "Transaction PIN Required",
+          "You need to set a transaction PIN before making withdrawals.",
+          [
+            {
+              text: "Set PIN",
+              onPress: () => navigation.navigate("SetTransactionPin"),
+            },
+          ]
+        );
+
+      } 
+      
       else {
-        Alert.alert("Error", res.message || "Withdrawal failed");
+
+        Alert.alert("Withdrawal Failed", res.message || "Unable to process withdrawal");
+
       }
 
-    } catch (err) {
-      Alert.alert("Error", "Network error");
-    }
+    } catch (error) {
 
-    setLoading(false);
+      console.log("Withdrawal error:", error);
+
+      Alert.alert(
+        "Network Error",
+        "Please check your internet connection and try again."
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
   };
 
   return (
-    <Animated.View entering={FadeInDown.duration(400)} style={styles.container}>
-      
-      <Animated.Text entering={FadeInUp.duration(400)} style={styles.title}>
+    <View style={styles.container}>
+
+      {/* Title */}
+      <Animated.Text
+        entering={FadeInDown.duration(500)}
+        style={styles.title}
+      >
         Review Withdrawal
       </Animated.Text>
 
-      <View style={styles.card}>
+      {/* Summary Card */}
+      <Animated.View
+        entering={FadeInUp.delay(100)}
+        style={styles.card}
+      >
 
-        <Row label="Amount" value={`₦${amount}`} />
+        <Row label="Amount" value={`₦${formattedAmount}`} />
+
         <Row label="Bank" value={bankName} />
+
         <Row label="Account Number" value={accountNumber} />
+
         <Row label="Account Name" value={accountName} />
 
-      </View>
+      </Animated.View>
 
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleConfirm}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Confirm Withdrawal</Text>
-        )}
-      </TouchableOpacity>
+      {/* Confirm Button */}
+      <Animated.View entering={FadeInUp.delay(200)}>
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleConfirm}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>
+              Confirm Withdrawal
+            </Text>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
 
-    </Animated.View>
+      {/* Cancel Button */}
+      <Animated.View entering={FadeInRight.delay(250)}>
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() => navigation.goBack()}
+          disabled={loading}
+        >
+          <Text style={styles.cancelText}>Go Back</Text>
+        </TouchableOpacity>
+      </Animated.View>
+
+    </View>
   );
 }
+
 
 const Row = ({ label, value }) => (
   <View style={styles.row}>
@@ -99,36 +167,39 @@ const Row = ({ label, value }) => (
   </View>
 );
 
+
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: "#0f172a",
-    padding: 20,
+    padding: 24,
     justifyContent: "center",
   },
 
   title: {
     color: "#fff",
     fontSize: 26,
-    fontWeight: "bold",
-    marginBottom: 25,
+    fontWeight: "700",
+    marginBottom: 30,
     textAlign: "center",
   },
 
   card: {
     backgroundColor: "#1e293b",
-    borderRadius: 14,
-    padding: 20,
+    borderRadius: 16,
+    padding: 22,
     marginBottom: 30,
   },
 
   row: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
 
   label: {
     color: "#94a3b8",
     fontSize: 13,
+    marginBottom: 3,
   },
 
   value: {
@@ -140,7 +211,7 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: "#22c55e",
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: "center",
   },
 
@@ -150,7 +221,18 @@ const styles = StyleSheet.create({
 
   buttonText: {
     color: "#fff",
-    fontWeight: "600",
     fontSize: 16,
+    fontWeight: "700",
   },
+
+  cancelButton: {
+    marginTop: 18,
+    alignItems: "center",
+  },
+
+  cancelText: {
+    color: "#94a3b8",
+    fontSize: 15,
+  },
+
 });

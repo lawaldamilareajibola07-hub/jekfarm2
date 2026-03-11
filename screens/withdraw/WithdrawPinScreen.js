@@ -7,92 +7,149 @@ import {
   Alert,
 } from "react-native";
 
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+} from "react-native-reanimated";
 
 import PinInput from "../../components/security/PinInput";
 import { confirmWithdrawal } from "../../api/withdraw";
 
 export default function WithdrawPinScreen({ route, navigation }) {
-  const { reference } = route.params;
+
+  const { reference } = route.params || {};
 
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const submitWithdrawal = async () => {
+
+    if (!reference || loading) return;
+
     setLoading(true);
     setError("");
 
     try {
+
       const res = await confirmWithdrawal(reference, pin);
 
       if (res.status === "success") {
-        const status = res.data.status;
 
-        if (status === "success") {
-          navigation.replace("WithdrawSuccess", {
-            reference: res.data.reference,
-          });
-        }
+        const { status, reference: txRef } = res.data;
 
-        else if (status === "processing") {
-          Alert.alert("Processing", "Your withdrawal is processing.");
-          navigation.popToTop();
-        }
+        switch (status) {
 
-        else if (status === "queued") {
-          Alert.alert("Queued", "Withdrawal queued. Please retry later.");
-          navigation.popToTop();
-        }
+          case "success":
+            navigation.replace("WithdrawSuccess", {
+              reference: txRef,
+            });
+            break;
 
-        else if (status === "reversed") {
-          Alert.alert("Reversed", "Withdrawal failed. Funds returned to wallet.");
-          navigation.popToTop();
+          case "processing":
+            Alert.alert(
+              "Processing",
+              "Your withdrawal is currently being processed."
+            );
+            navigation.popToTop();
+            break;
+
+          case "queued":
+            Alert.alert(
+              "Queued",
+              "Your withdrawal is queued and will be processed shortly."
+            );
+            navigation.popToTop();
+            break;
+
+          case "reversed":
+            Alert.alert(
+              "Reversed",
+              "Withdrawal failed. Funds have been returned to your wallet."
+            );
+            navigation.popToTop();
+            break;
+
+          default:
+            setError("Unknown withdrawal status");
+            setPin("");
         }
 
       } else {
-        setError(res.message || "Withdrawal failed");
+
+        setError(res.message || "Invalid transaction PIN");
         setPin("");
+
       }
 
     } catch (err) {
+
+      console.log("Withdrawal confirm error:", err);
+
       setError("Invalid PIN or network issue");
       setPin("");
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
-  // AUTO SUBMIT WHEN PIN = 6
+
+  // Auto submit when PIN reaches 6 digits
   useEffect(() => {
+
     if (pin.length === 6 && !loading) {
       submitWithdrawal();
     }
+
   }, [pin]);
 
+
   return (
-    <Animated.View entering={FadeInDown.duration(400)} style={styles.container}>
-      
-      <Animated.Text entering={FadeInUp.duration(400)} style={styles.title}>
+    <Animated.View
+      entering={FadeInDown.duration(400)}
+      style={styles.container}
+    >
+
+      {/* Title */}
+      <Animated.Text
+        entering={FadeInUp.duration(400)}
+        style={styles.title}
+      >
         Confirm Withdrawal
       </Animated.Text>
 
-      <Animated.Text entering={FadeInUp.delay(100)} style={styles.subtitle}>
+      {/* Subtitle */}
+      <Animated.Text
+        entering={FadeInUp.delay(100)}
+        style={styles.subtitle}
+      >
         Enter your transaction PIN
       </Animated.Text>
 
-      <PinInput pin={pin} setPin={setPin} />
+      {/* PIN Input */}
+      <PinInput
+        pin={pin}
+        setPin={setPin}
+      />
 
+      {/* Loader */}
       {loading && (
         <ActivityIndicator
           size="large"
           color="#22c55e"
-          style={{ marginTop: 20 }}
+          style={styles.loader}
         />
       )}
 
-      {error !== "" && (
-        <Text style={styles.error}>{error}</Text>
+      {/* Error Message */}
+      {error !== "" && !loading && (
+        <Text style={styles.error}>
+          {error}
+        </Text>
       )}
 
     </Animated.View>
@@ -100,6 +157,7 @@ export default function WithdrawPinScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: "#0f172a",
@@ -110,7 +168,7 @@ const styles = StyleSheet.create({
   title: {
     color: "#fff",
     fontSize: 26,
-    fontWeight: "bold",
+    fontWeight: "700",
     marginBottom: 10,
     textAlign: "center",
   },
@@ -119,11 +177,18 @@ const styles = StyleSheet.create({
     color: "#94a3b8",
     fontSize: 16,
     textAlign: "center",
+    marginBottom: 10,
+  },
+
+  loader: {
+    marginTop: 20,
   },
 
   error: {
     color: "#ef4444",
     textAlign: "center",
     marginTop: 15,
+    fontSize: 14,
   },
+
 });

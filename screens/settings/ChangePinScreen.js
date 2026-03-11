@@ -1,9 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   Keyboard,
   Alert,
@@ -11,7 +9,8 @@ import {
 } from "react-native";
 import Animated, { FadeInUp, FadeInDown } from "react-native-reanimated";
 
-import { changeTransactionPin } from "../../api/userManager"; // We'll create this API call
+import PinInput from "../../components/security/PinInput"; // Circle-style input
+import { changeTransactionPin } from "../../api/userManager";
 
 export default function ChangePinScreen({ navigation }) {
   const [currentPin, setCurrentPin] = useState("");
@@ -19,23 +18,27 @@ export default function ChangePinScreen({ navigation }) {
   const [confirmPin, setConfirmPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [step, setStep] = useState("current"); // current | new | confirm
 
-  const handleChangePin = async () => {
+  // Auto-move between steps
+  useEffect(() => {
+    if (currentPin.length === 6 && step === "current") setStep("new");
+    if (newPin.length === 6 && step === "new") setStep("confirm");
+    if (confirmPin.length === 6 && step === "confirm") submitPinChange();
+  }, [currentPin, newPin, confirmPin]);
+
+  const submitPinChange = async () => {
     Keyboard.dismiss();
     setError("");
-
-    // Basic validation
-    if (!currentPin || !newPin || !confirmPin) {
-      return setError("All fields are required");
-    }
-    if (newPin !== confirmPin) {
-      return setError("New PIN and confirmation do not match");
-    }
-    if (newPin.length !== 6 || currentPin.length !== 6) {
-      return setError("PIN must be 6 digits");
-    }
-
     setLoading(true);
+
+    // Validation
+    if (newPin !== confirmPin) {
+      setError("New PIN and confirmation do not match");
+      setConfirmPin("");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await changeTransactionPin({
@@ -50,10 +53,18 @@ export default function ChangePinScreen({ navigation }) {
         ]);
       } else {
         setError(res.message || "Something went wrong");
+        setCurrentPin("");
+        setNewPin("");
+        setConfirmPin("");
+        setStep("current");
       }
     } catch (e) {
       console.log("Change PIN Error:", e);
       setError("Network error. Please try again.");
+      setCurrentPin("");
+      setNewPin("");
+      setConfirmPin("");
+      setStep("current");
     } finally {
       setLoading(false);
     }
@@ -65,59 +76,41 @@ export default function ChangePinScreen({ navigation }) {
         Change Transaction PIN
       </Animated.Text>
 
-      <Animated.View entering={FadeInUp.delay(100)}>
-        <TextInput
-          style={styles.input}
-          placeholder="Current PIN"
-          placeholderTextColor="#94a3b8"
-          keyboardType="numeric"
-          secureTextEntry
-          maxLength={6}
-          value={currentPin}
-          onChangeText={(text) => setCurrentPin(text.replace(/[^0-9]/g, ""))}
-        />
+      <Animated.Text entering={FadeInUp.delay(100)} style={styles.subtitle}>
+        {step === "current"
+          ? "Enter your current PIN"
+          : step === "new"
+          ? "Enter new PIN"
+          : "Confirm new PIN"}
+      </Animated.Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="New PIN"
-          placeholderTextColor="#94a3b8"
-          keyboardType="numeric"
-          secureTextEntry
-          maxLength={6}
-          value={newPin}
-          onChangeText={(text) => setNewPin(text.replace(/[^0-9]/g, ""))}
-        />
+      {/* PIN Input */}
+      <PinInput
+        pin={step === "current" ? currentPin : step === "new" ? newPin : confirmPin}
+        setPin={
+          step === "current"
+            ? setCurrentPin
+            : step === "new"
+            ? setNewPin
+            : setConfirmPin
+        }
+      />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm New PIN"
-          placeholderTextColor="#94a3b8"
-          keyboardType="numeric"
-          secureTextEntry
-          maxLength={6}
-          value={confirmPin}
-          onChangeText={(text) => setConfirmPin(text.replace(/[^0-9]/g, ""))}
+      {/* Loading Indicator */}
+      {loading && (
+        <ActivityIndicator
+          size="large"
+          color="#22c55e"
+          style={{ marginTop: 20 }}
         />
-      </Animated.View>
+      )}
 
+      {/* Error Message */}
       {error !== "" && (
         <Animated.Text entering={FadeInDown.duration(300)} style={styles.error}>
           {error}
         </Animated.Text>
       )}
-
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleChangePin}
-        disabled={loading}
-        activeOpacity={0.8}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Change PIN</Text>
-        )}
-      </TouchableOpacity>
     </Animated.View>
   );
 }
@@ -129,40 +122,26 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: "center",
   },
+
   title: {
     color: "#fff",
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 25,
+    fontSize: 26,
+    fontWeight: "bold",
+    marginBottom: 10,
     textAlign: "center",
   },
-  input: {
-    backgroundColor: "#1e293b",
-    padding: 16,
-    borderRadius: 12,
-    color: "#fff",
-    fontSize: 18,
-    marginBottom: 15,
+
+  subtitle: {
+    color: "#94a3b8",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 30,
   },
+
   error: {
     color: "#ef4444",
-    fontSize: 14,
-    marginBottom: 15,
     textAlign: "center",
+    marginTop: 15,
     fontWeight: "500",
-  },
-  button: {
-    backgroundColor: "#22c55e",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  buttonDisabled: {
-    backgroundColor: "#4ade80",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
   },
 });

@@ -1,118 +1,129 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
   Keyboard,
+  Alert,
+  ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
+import Animated, { FadeInUp, FadeInDown, SlideInUp } from "react-native-reanimated";
 
-import Animated, { FadeInUp, FadeInDown } from "react-native-reanimated";
-import { setTransactionPin } from "../../api/userManager";
 import PinInput from "../../components/security/PinInput";
+import { setTransactionPin } from "../../api/userManager";
 
 export default function SetTransactionPinScreen({ navigation }) {
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [step, setStep] = useState("pin"); // "pin" or "confirm"
 
-  const handleSetPin = async () => {
+  // Auto move to confirm step or submit
+  useEffect(() => {
+    if (pin.length === 6 && step === "pin") setStep("confirm");
+    if (confirmPin.length === 6 && step === "confirm") submitPin();
+  }, [pin, confirmPin]);
+
+  const submitPin = async () => {
     Keyboard.dismiss();
+    setError("");
 
+    // Validation
     if (!pin || !confirmPin) {
-      return setError("Enter PIN");
+      setError("Enter PIN and confirmation");
+      return;
     }
-
     if (pin !== confirmPin) {
-      return setError("PINs do not match");
+      setError("PINs do not match");
+      setConfirmPin("");
+      setStep("confirm");
+      return;
     }
-
     if (!password) {
-      return setError("Enter account password");
+      setError("Enter account password");
+      return;
     }
 
     setLoading(true);
-    setError("");
-
     try {
       const res = await setTransactionPin(pin, password);
 
       if (res.status === "success") {
-        Alert.alert("Success", "Transaction PIN set successfully");
-
-        navigation.goBack();
+        Alert.alert("Success", "Transaction PIN set successfully", [
+          { text: "OK", onPress: () => navigation.goBack() },
+        ]);
       } else {
         setError(res.message || "Failed to set PIN");
+        setPin("");
+        setConfirmPin("");
+        setStep("pin");
       }
     } catch (e) {
-      setError("Network error");
+      console.log("Set PIN Error:", e);
+      setError("Network error. Please try again.");
+      setPin("");
+      setConfirmPin("");
+      setStep("pin");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Animated.Text entering={FadeInDown.duration(400)} style={styles.title}>
+    <Animated.View entering={SlideInUp.duration(400)} style={styles.container}>
+      <Animated.Text entering={FadeInUp.duration(400)} style={styles.title}>
         Set Transaction PIN
       </Animated.Text>
 
-      <Animated.Text entering={FadeInUp.delay(100)} style={styles.subtitle}>
-        This PIN will be required for withdrawals
+      <Animated.Text entering={FadeInUp.delay(150)} style={styles.subtitle}>
+        {step === "pin" ? "Enter new PIN" : "Confirm your PIN"}
       </Animated.Text>
-<PinInput pin={pin} setPin={setPin} />
-<PinInput pin={confirmPin} setPin={setConfirmPin} />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter PIN"
-        placeholderTextColor="#94a3b8"
-        keyboardType="numeric"
-        secureTextEntry
-        maxLength={6}
-        value={pin}
-        onChangeText={(text) => setPin(text.replace(/[^0-9]/g, ""))}
+
+      <PinInput
+        pin={step === "pin" ? pin : confirmPin}
+        setPin={step === "pin" ? setPin : setConfirmPin}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm PIN"
-        placeholderTextColor="#94a3b8"
-        keyboardType="numeric"
-        secureTextEntry
-        maxLength={6}
-        value={confirmPin}
-        onChangeText={(text) => setConfirmPin(text.replace(/[^0-9]/g, ""))}
-      />
+      {/* Password Input */}
+      <Animated.View entering={FadeInUp.delay(250)} style={{ marginTop: 20 }}>
+        <Text style={styles.passwordLabel}>Account Password</Text>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Enter password"
+          placeholderTextColor="#94a3b8"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+      </Animated.View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Account Password"
-        placeholderTextColor="#94a3b8"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      {/* Error Message */}
+      {error !== "" && (
+        <Animated.Text entering={FadeInDown.duration(300)} style={styles.error}>
+          {error}
+        </Animated.Text>
+      )}
 
-      {error !== "" && <Text style={styles.error}>{error}</Text>}
-
+      {/* Submit Button */}
       <TouchableOpacity
         style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleSetPin}
+        onPress={submitPin}
         disabled={loading}
+        activeOpacity={0.8}
       >
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Set PIN</Text>
+          <Text style={styles.buttonText}>
+            {step === "pin" ? "Next" : "Set PIN"}
+          </Text>
         )}
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -123,7 +134,6 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: "center",
   },
-
   title: {
     color: "#fff",
     fontSize: 26,
@@ -131,39 +141,38 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
-
   subtitle: {
     color: "#94a3b8",
     textAlign: "center",
     marginBottom: 30,
   },
-
-  input: {
+  passwordLabel: {
+    color: "#94a3b8",
+    marginBottom: 8,
+  },
+  passwordInput: {
     backgroundColor: "#1e293b",
     padding: 16,
     borderRadius: 12,
     color: "#fff",
-    marginBottom: 15,
+    fontSize: 16,
   },
-
   error: {
     color: "#ef4444",
-    marginBottom: 10,
+    marginTop: 15,
     textAlign: "center",
+    fontWeight: "500",
   },
-
   button: {
     backgroundColor: "#22c55e",
     padding: 16,
     borderRadius: 12,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 25,
   },
-
   buttonDisabled: {
     backgroundColor: "#4ade80",
   },
-
   buttonText: {
     color: "#fff",
     fontWeight: "600",

@@ -1,11 +1,29 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Share,
+} from "react-native";
 import LottieView from "lottie-react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import Animated, { FadeInUp, FadeInDown, Layout } from "react-native-reanimated";
 
 const WithdrawSuccessScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const { reference, amount, bankName, accountNumber } = route.params || {};
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Withdrawal Successful!\n\nAmount: ₦${amount}\nBank: ${bankName}\nAccount: ${accountNumber}\nReference: ${reference}`,
+      });
+    } catch (error) {
+      console.log("Share error:", error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -37,11 +55,32 @@ const WithdrawSuccessScreen = () => {
           entering={FadeInUp.delay(400)}
           style={styles.subtitle}
         >
-          Your withdrawal request has been processed successfully.
+          Your withdrawal has been processed successfully.
         </Animated.Text>
 
-        {/* Button */}
-        <Animated.View entering={FadeInUp.delay(550)}>
+        {/* Transaction Reference */}
+        {reference && (
+          <Animated.Text
+            entering={FadeInUp.delay(500)}
+            style={styles.reference}
+          >
+            Ref: {reference}
+          </Animated.Text>
+        )}
+
+        {/* Share & Back Buttons */}
+        <Animated.View
+          entering={FadeInUp.delay(650)}
+          style={styles.buttonsContainer}
+        >
+          <TouchableOpacity
+            style={[styles.button, styles.shareButton]}
+            onPress={handleShare}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.buttonText}>Share Receipt</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.button}
             onPress={() => navigation.navigate("WalletDashboard")}
@@ -50,7 +89,6 @@ const WithdrawSuccessScreen = () => {
             <Text style={styles.buttonText}>Back to Wallet</Text>
           </TouchableOpacity>
         </Animated.View>
-
       </Animated.View>
     </View>
   );
@@ -59,7 +97,6 @@ const WithdrawSuccessScreen = () => {
 export default WithdrawSuccessScreen;
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: "#0f172a",
@@ -101,12 +138,31 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  button: {
+  reference: {
+    fontSize: 14,
+    color: "#94a3b8",
+    marginTop: 10,
+    textAlign: "center",
+  },
+
+  buttonsContainer: {
     marginTop: 28,
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
+  button: {
+    flex: 1,
     backgroundColor: "#22c55e",
     paddingVertical: 14,
-    paddingHorizontal: 36,
     borderRadius: 12,
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
+
+  shareButton: {
+    backgroundColor: "#2563eb",
   },
 
   buttonText: {
@@ -114,5 +170,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 16,
   },
-
 });
