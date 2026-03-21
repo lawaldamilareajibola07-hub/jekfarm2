@@ -7,12 +7,18 @@ import {
   StyleSheet,
   ActivityIndicator,
   Keyboard,
+  Image,
 } from "react-native";
 
 import Animated, {
   FadeInDown,
   FadeInUp,
   FadeIn,
+  SlideInDown,
+  SlideOutUp,
+  withSpring,
+  useSharedValue,
+  useAnimatedStyle,
 } from "react-native-reanimated";
 
 import { fetchBanks, resolveAccountNumber } from "../../api/bank";
@@ -38,7 +44,17 @@ export default function WithdrawScreen({ navigation }) {
 
   const [error, setError] = useState("");
 
-  // Load banks and wallet balance
+  const scale = useSharedValue(1);
+  const transferScale = useSharedValue(1);
+
+  const animatedButtonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const transferAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: transferScale.value }],
+  }));
+
   useEffect(() => {
     loadBanks();
     loadBalance();
@@ -82,7 +98,6 @@ export default function WithdrawScreen({ navigation }) {
     }
   };
 
-  // Resolve account automatically
   useEffect(() => {
     if (selectedBank && accountNumber.length === 10) {
       resolveAccount(accountNumber);
@@ -158,23 +173,40 @@ export default function WithdrawScreen({ navigation }) {
     });
   };
 
-  const isDisabled =
-    !selectedBank || !accountName || !amount || resolving;
+  const isDisabled = !selectedBank || !accountName || !amount || resolving;
 
   return (
     <View style={styles.container}>
       
       {/* Title */}
-      <Animated.Text
-        entering={FadeInDown.duration(500)}
-        style={styles.title}
-      >
+      <Animated.Text entering={FadeInDown.duration(500)} style={styles.title}>
         Withdraw Funds
       </Animated.Text>
 
+      {/* Quick Access Section */}
+      <Animated.View entering={FadeInUp.delay(50).springify()}>
+        <Text style={styles.quickTitle}>Quick Actions</Text>
+
+        <View style={styles.quickRow}>
+          
+          <TouchableOpacity
+            style={styles.quickCard}
+            onPressIn={() => (transferScale.value = withSpring(0.9))}
+            onPressOut={() => (transferScale.value = withSpring(1))}
+            onPress={() => navigation.navigate("TransferScreen")}
+          >
+            <Animated.View style={transferAnimatedStyle}>
+              <Text style={styles.quickIcon}>💸</Text>
+              <Text style={styles.quickText}>Transfer</Text>
+            </Animated.View>
+          </TouchableOpacity>
+
+        </View>
+      </Animated.View>
+
       {/* Balance */}
       <Animated.View
-        entering={FadeInUp.delay(100)}
+        entering={FadeInUp.delay(100).springify()}
         style={styles.balanceWrapper}
       >
         {loadingBalance ? (
@@ -188,16 +220,18 @@ export default function WithdrawScreen({ navigation }) {
 
       {/* Account Input */}
       <Animated.View
-        entering={FadeInUp.delay(200)}
+        entering={FadeInUp.delay(200).springify()}
         style={styles.accountInputWrapper}
       >
-        {selectedBank && (
+        {selectedBank && selectedBank.logoUrl ? (
+          <Image source={{ uri: selectedBank.logoUrl }} style={styles.bankLogoImage} />
+        ) : selectedBank ? (
           <View style={styles.bankLogo}>
             <Text style={styles.bankLogoText}>
               {selectedBank.name.charAt(0)}
             </Text>
           </View>
-        )}
+        ) : null}
 
         <TextInput
           placeholder="Account Number"
@@ -210,38 +244,29 @@ export default function WithdrawScreen({ navigation }) {
         />
       </Animated.View>
 
-      {/* Resolving Loader */}
       {resolving && (
-        <Animated.View entering={FadeIn}>
-          <ActivityIndicator
-            color="#22c55e"
-            style={{ marginBottom: 10 }}
-          />
+        <Animated.View entering={FadeIn.springify()}>
+          <ActivityIndicator color="#22c55e" style={{ marginBottom: 10 }} />
         </Animated.View>
       )}
 
-      {/* Account Name */}
       {accountName !== "" && !resolving && (
-        <Animated.Text
-          entering={FadeInUp.duration(400)}
-          style={styles.accountName}
-        >
-          {accountName}
-        </Animated.Text>
+        <Animated.View entering={FadeInUp.springify()}>
+          <Text style={styles.accountName}>✔ {accountName}</Text>
+        </Animated.View>
       )}
 
-      {/* Error */}
       {error !== "" && (
         <Animated.Text
-          entering={FadeInDown.duration(300)}
+          entering={SlideInDown.springify()}
+          exiting={SlideOutUp.springify()}
           style={styles.error}
         >
           {error}
         </Animated.Text>
       )}
 
-      {/* Amount */}
-      <Animated.View entering={FadeInUp.delay(300)}>
+      <Animated.View entering={FadeInUp.delay(300).springify()}>
         <AmountInput
           amount={amount}
           setAmount={setAmount}
@@ -249,23 +274,20 @@ export default function WithdrawScreen({ navigation }) {
         />
       </Animated.View>
 
-      {/* Continue Button */}
-      <Animated.View entering={FadeInUp.delay(400)}>
+      <Animated.View entering={FadeInUp.delay(400).springify()}>
         <TouchableOpacity
-          style={[
-            styles.button,
-            isDisabled && styles.buttonDisabled,
-          ]}
-          onPress={handleNext}
+          style={[styles.button, isDisabled && styles.buttonDisabled]}
           disabled={isDisabled}
+          onPressIn={() => (scale.value = withSpring(0.95))}
+          onPressOut={() => (scale.value = withSpring(1))}
+          onPress={handleNext}
         >
-          <Text style={styles.buttonText}>
+          <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>
             Continue
-          </Text>
+          </Animated.Text>
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Bank Modal */}
       <BankSelectorModal
         visible={bankModalVisible}
         banks={banks}
@@ -277,21 +299,44 @@ export default function WithdrawScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#0f172a", padding: 20 },
 
-  container: {
-    flex: 1,
-    backgroundColor: "#0f172a",
-    padding: 20,
+  title: { fontSize: 28, fontWeight: "700", color: "#fff", marginBottom: 10 },
+
+  quickTitle:{
+    color:"#94a3b8",
+    marginBottom:10,
+    fontWeight:"600"
   },
 
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: "#fff",
-    marginBottom: 20,
+  quickRow:{
+    flexDirection:"row",
+    marginBottom:20
+  },
+
+  quickCard:{
+    backgroundColor:"#1e293b",
+    padding:18,
+    borderRadius:16,
+    alignItems:"center",
+    width:110,
+    marginRight:10
+  },
+
+  quickIcon:{
+    fontSize:22,
+    marginBottom:6
+  },
+
+  quickText:{
+    color:"#fff",
+    fontWeight:"600"
   },
 
   balanceWrapper: {
+    backgroundColor: "#1e293b",
+    padding: 15,
+    borderRadius: 16,
     marginBottom: 20,
   },
 
@@ -317,9 +362,13 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
 
-  bankLogoText: {
-    color: "#22c55e",
-    fontWeight: "700",
+  bankLogoText: { color: "#22c55e", fontWeight: "700" },
+
+  bankLogoImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 10,
   },
 
   input: {
@@ -328,17 +377,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     color: "#fff",
+    fontSize: 16,
   },
 
   accountName: {
     color: "#22c55e",
     marginBottom: 10,
     fontWeight: "600",
+    fontSize: 16,
   },
 
   error: {
     color: "#ef4444",
     marginBottom: 10,
+    fontSize: 14,
   },
 
   button: {
@@ -349,9 +401,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 
-  buttonDisabled: {
-    backgroundColor: "#4ade80",
-  },
+  buttonDisabled: { backgroundColor: "#4ade80" },
 
   buttonText: {
     color: "#fff",

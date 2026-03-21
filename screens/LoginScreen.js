@@ -1,3 +1,4 @@
+// screens/LoginScreen.js
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -14,6 +15,7 @@ import {
   Keyboard,
   Animated,
   Easing,
+  ToastAndroid,
 } from "react-native";
 import { FontAwesome as Icon } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -25,7 +27,7 @@ const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false); // ✅ NEW
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
@@ -34,6 +36,10 @@ const LoginScreen = () => {
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const titleTranslate = useRef(new Animated.Value(30)).current;
 
+  // Admin triple-tap
+  const [logoTapCount, setLogoTapCount] = useState(0);
+  const logoTapTimeout = useRef(null);
+
   /* =============================
      LOAD SAVED CREDENTIALS
   ============================== */
@@ -41,17 +47,18 @@ const LoginScreen = () => {
     const loadSavedCredentials = async () => {
       const savedEmail = await AsyncStorage.getItem("remember_email");
       const savedPassword = await AsyncStorage.getItem("remember_password");
-
       if (savedEmail && savedPassword) {
         setEmail(savedEmail);
         setPassword(savedPassword);
         setRememberMe(true);
       }
     };
-
     loadSavedCredentials();
   }, []);
 
+  /* =============================
+     Logo & Title Animation
+  ============================== */
   useEffect(() => {
     Animated.sequence([
       Animated.parallel([
@@ -85,6 +92,9 @@ const LoginScreen = () => {
     ]).start();
   }, []);
 
+  /* =============================
+     Keyboard listener
+  ============================== */
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
@@ -100,6 +110,40 @@ const LoginScreen = () => {
     };
   }, []);
 
+  /* =============================
+     HANDLE LOGO TRIPLE TAP
+  ============================== */
+  const handleLogoTap = () => {
+    setLogoTapCount((prev) => prev + 1);
+
+    // Pulse animation on each tap
+    Animated.sequence([
+      Animated.timing(logoScale, { toValue: 1.2, duration: 100, useNativeDriver: true }),
+      Animated.timing(logoScale, { toValue: 1, duration: 100, useNativeDriver: true }),
+    ]).start();
+
+    // Reset tap count after 1 second
+    if (logoTapTimeout.current) clearTimeout(logoTapTimeout.current);
+    logoTapTimeout.current = setTimeout(() => setLogoTapCount(0), 1000);
+
+    // On third tap, navigate to AdminLogin inside nested navigator
+    if (logoTapCount + 1 === 3) {
+      setLogoTapCount(0);
+
+      if (Platform.OS === "android") {
+        ToastAndroid.show("Admin mode activated", ToastAndroid.SHORT);
+      } else {
+        Alert.alert("Admin mode activated");
+      }
+
+      // ✅ Nested navigation fix
+      navigation.navigate("Admin", { screen: "AdminLogin" });
+    }
+  };
+
+  /* =============================
+     HANDLE USER LOGIN
+  ============================== */
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please enter both email and password");
@@ -108,11 +152,7 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      const res = await api.post("/userManager/login", {
-        login: email,
-        password,
-      });
-
+      const res = await api.post("/userManager/login", { login: email, password });
       const data = res.data;
 
       if (data.status === "success") {
@@ -139,9 +179,7 @@ const LoginScreen = () => {
           await AsyncStorage.setItem("session_cookie", token);
         }
 
-        /* =============================
-           SAVE OR CLEAR CREDENTIALS
-        ============================== */
+        // Save or clear credentials
         if (rememberMe) {
           await AsyncStorage.setItem("remember_email", email);
           await AsyncStorage.setItem("remember_password", password);
@@ -151,18 +189,12 @@ const LoginScreen = () => {
         }
 
         const userRole = userData.role.toLowerCase();
-
-        if (userRole === "farmer") {
-          navigation.replace("FarmerTabs");
-        } else {
-          navigation.replace("MainTabs");
-        }
+        navigation.replace(userRole === "farmer" ? "FarmerTabs" : "MainTabs");
       } else {
         Alert.alert("Login Failed", data.message);
       }
     } catch (err) {
       let errorMessage = "Failed to connect to server";
-
       if (err.code === "ECONNABORTED") {
         errorMessage =
           "Connection timed out. Please check your internet connection and try again.";
@@ -173,7 +205,6 @@ const LoginScreen = () => {
         errorMessage =
           err.response.data?.message || "Server error. Please try again later.";
       }
-
       console.log("🔥 LOGIN ERROR:", err.response?.data || err);
       Alert.alert("Error", errorMessage);
     } finally {
@@ -204,9 +235,11 @@ const LoginScreen = () => {
                   opacity: logoOpacity,
                 }}
               >
-                <View style={styles.logoCircle}>
-                  <Icon name="leaf" size={40} color="#fff" />
-                </View>
+                <TouchableOpacity activeOpacity={0.7} onPress={handleLogoTap}>
+                  <View style={styles.logoCircle}>
+                    <Icon name="leaf" size={40} color="#fff" />
+                  </View>
+                </TouchableOpacity>
               </Animated.View>
 
               <Animated.View
@@ -216,9 +249,7 @@ const LoginScreen = () => {
                 }}
               >
                 <Text style={styles.title}>Welcome Back</Text>
-                <Text style={styles.subtitle}>
-                  Login to your Jekfarm account
-                </Text>
+                <Text style={styles.subtitle}>Login to your Jekfarm account</Text>
               </Animated.View>
             </View>
 
@@ -226,12 +257,7 @@ const LoginScreen = () => {
               <View style={styles.inputWrapper}>
                 <Text style={styles.label}>Email / Phone Number</Text>
                 <View style={styles.inputContainer}>
-                  <Icon
-                    name="user"
-                    size={18}
-                    color="#9ca3af"
-                    style={styles.fieldIcon}
-                  />
+                  <Icon name="user" size={18} color="#9ca3af" style={styles.fieldIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Ex. john@example.com"
@@ -245,12 +271,7 @@ const LoginScreen = () => {
               <View style={styles.inputWrapper}>
                 <Text style={styles.label}>Password</Text>
                 <View style={styles.inputContainer}>
-                  <Icon
-                    name="lock"
-                    size={18}
-                    color="#9ca3af"
-                    style={styles.fieldIcon}
-                  />
+                  <Icon name="lock" size={18} color="#9ca3af" style={styles.fieldIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="••••••••"
@@ -258,54 +279,22 @@ const LoginScreen = () => {
                     value={password}
                     onChangeText={setPassword}
                   />
-                  <TouchableOpacity
-                    style={styles.eyeIcon}
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    <Icon
-                      name={showPassword ? "eye" : "eye-slash"}
-                      size={18}
-                      color="#9ca3af"
-                    />
+                  <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
+                    <Icon name={showPassword ? "eye" : "eye-slash"} size={18} color="#9ca3af" />
                   </TouchableOpacity>
                 </View>
               </View>
 
-              {/* ✅ REMEMBER ME */}
               <TouchableOpacity
                 onPress={() => setRememberMe(!rememberMe)}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 20,
-                }}
+                style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}
               >
-                <Icon
-                  name={rememberMe ? "check-square" : "square-o"}
-                  size={18}
-                  color="#10b981"
-                />
-                <Text
-                  style={{
-                    marginLeft: 8,
-                    color: "#374151",
-                    fontWeight: "500",
-                  }}
-                >
-                  Remember Me
-                </Text>
+                <Icon name={rememberMe ? "check-square" : "square-o"} size={18} color="#10b981" />
+                <Text style={{ marginLeft: 8, color: "#374151", fontWeight: "500" }}>Remember Me</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.loginButton}
-                onPress={handleLogin}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.loginText}>Login</Text>
-                )}
+              <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginText}>Login</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -320,11 +309,7 @@ export default LoginScreen;
 // 🔹 Styles remain completely untouched
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#fff" },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
+  scrollContainer: { flexGrow: 1, justifyContent: "center", padding: 24 },
   scrollContainerKeyboardVisible: { paddingBottom: 40 },
   card: {
     width: "100%",
@@ -354,67 +339,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#111827",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: "#6b7280",
-    textAlign: "center",
-  },
+  title: { fontSize: 28, fontWeight: "800", color: "#111827", marginBottom: 8 },
+  subtitle: { fontSize: 15, color: "#6b7280", textAlign: "center" },
   formSection: { width: "100%" },
   inputWrapper: { marginBottom: 20 },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 56,
-    backgroundColor: "#f9fafb",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingHorizontal: 16,
-  },
+  label: { fontSize: 14, fontWeight: "600", color: "#374151", marginBottom: 8, marginLeft: 4 },
+  inputContainer: { flexDirection: "row", alignItems: "center", height: 56, backgroundColor: "#f9fafb", borderRadius: 16, borderWidth: 1, borderColor: "#e5e7eb", paddingHorizontal: 16 },
   fieldIcon: { marginRight: 12 },
-  input: {
-    flex: 1,
-    height: "100%",
-    fontSize: 15,
-    color: "#111827",
-    fontWeight: "500",
-  },
+  input: { flex: 1, height: "100%", fontSize: 15, color: "#111827", fontWeight: "500" },
   eyeIcon: { padding: 8 },
-  forgotPasswordLink: { alignSelf: "flex-end", marginBottom: 24 },
-  forgotPasswordText: {
-    color: "#10b981",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  loginButton: {
-    backgroundColor: "#10b981",
-    height: 56,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 4,
-    shadowColor: "#10b981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  loginText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
+  loginButton: { backgroundColor: "#10b981", height: 56, borderRadius: 16, justifyContent: "center", alignItems: "center", elevation: 4, shadowColor: "#10b981", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+  loginText: { color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.5 },
 });

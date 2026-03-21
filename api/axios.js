@@ -1,5 +1,6 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
+import "react-native-get-random-values";
 import { BASE_URL } from "./config";
 
 const api = axios.create({

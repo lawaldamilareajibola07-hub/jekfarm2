@@ -10,19 +10,22 @@ import {
   TouchableOpacity,
 } from "react-native";
 import Animated, { FadeInUp, FadeInDown, SlideInUp } from "react-native-reanimated";
+import { Ionicons } from "@expo/vector-icons";
 
 import PinInput from "../../components/security/PinInput";
 import { setTransactionPin } from "../../api/userManager";
 
-export default function SetTransactionPinScreen({ navigation }) {
+export default function SetTransactionPinScreen({ navigation, route }) {
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [step, setStep] = useState("pin"); // "pin" or "confirm"
+  const [step, setStep] = useState("pin"); // "pin" | "confirm"
 
-  // Auto move to confirm step or submit
+  const { redirectTo } = route?.params || {};
+
   useEffect(() => {
     if (pin.length === 6 && step === "pin") setStep("confirm");
     if (confirmPin.length === 6 && step === "confirm") submitPin();
@@ -32,57 +35,89 @@ export default function SetTransactionPinScreen({ navigation }) {
     Keyboard.dismiss();
     setError("");
 
-    // Validation
     if (!pin || !confirmPin) {
       setError("Enter PIN and confirmation");
       return;
     }
+
     if (pin !== confirmPin) {
       setError("PINs do not match");
       setConfirmPin("");
       setStep("confirm");
       return;
     }
+
     if (!password) {
       setError("Enter account password");
       return;
     }
 
     setLoading(true);
+
     try {
       const res = await setTransactionPin(pin, password);
 
       if (res.status === "success") {
         Alert.alert("Success", "Transaction PIN set successfully", [
-          { text: "OK", onPress: () => navigation.goBack() },
+          {
+            text: "OK",
+            onPress: () => {
+              if (redirectTo) {
+                navigation.replace(redirectTo);
+              } else {
+                navigation.goBack();
+              }
+            },
+          },
         ]);
+      } else if (res.code === "INTERNAL_ERROR") {
+        if (res.message.toLowerCase().includes("already")) {
+          Alert.alert(
+            "PIN already set",
+            "You already have a transaction PIN. Please use Change PIN instead.",
+            [
+              {
+                text: "Go to Change PIN",
+                onPress: () => navigation.navigate("ChangePinScreen"),
+              },
+            ]
+          );
+        } else {
+          setError(res.message || "Something went wrong. Please try again.");
+        }
+        resetPin();
       } else {
         setError(res.message || "Failed to set PIN");
-        setPin("");
-        setConfirmPin("");
-        setStep("pin");
+        resetPin();
       }
     } catch (e) {
-      console.log("Set PIN Error:", e);
+      console.log("Set PIN Error:", e.response?.data || e.message);
       setError("Network error. Please try again.");
-      setPin("");
-      setConfirmPin("");
-      setStep("pin");
+      resetPin();
     } finally {
       setLoading(false);
     }
   };
 
+  const resetPin = () => {
+    setPin("");
+    setConfirmPin("");
+    setStep("pin");
+  };
+
   return (
     <Animated.View entering={SlideInUp.duration(400)} style={styles.container}>
+      {/* Title */}
       <Animated.Text entering={FadeInUp.duration(400)} style={styles.title}>
         Set Transaction PIN
       </Animated.Text>
 
+      {/* Step subtitle */}
       <Animated.Text entering={FadeInUp.delay(150)} style={styles.subtitle}>
         {step === "pin" ? "Enter new PIN" : "Confirm your PIN"}
       </Animated.Text>
 
+      {/* Pin Input */}
       <PinInput
         pin={step === "pin" ? pin : confirmPin}
         setPin={step === "pin" ? setPin : setConfirmPin}
@@ -91,14 +126,26 @@ export default function SetTransactionPinScreen({ navigation }) {
       {/* Password Input */}
       <Animated.View entering={FadeInUp.delay(250)} style={{ marginTop: 20 }}>
         <Text style={styles.passwordLabel}>Account Password</Text>
-        <TextInput
-          style={styles.passwordInput}
-          placeholder="Enter password"
-          placeholderTextColor="#94a3b8"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        <View style={styles.passwordWrapper}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Enter password"
+            placeholderTextColor="#94a3b8"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity
+            onPress={() => setShowPassword((prev) => !prev)}
+            style={styles.toggleButton}
+          >
+            <Ionicons
+              name={showPassword ? "eye-off" : "eye"}
+              size={22}
+              color="#94a3b8"
+            />
+          </TouchableOpacity>
+        </View>
       </Animated.View>
 
       {/* Error Message */}
@@ -118,9 +165,7 @@ export default function SetTransactionPinScreen({ navigation }) {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>
-            {step === "pin" ? "Next" : "Set PIN"}
-          </Text>
+          <Text style={styles.buttonText}>{step === "pin" ? "Next" : "Set PIN"}</Text>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -150,12 +195,21 @@ const styles = StyleSheet.create({
     color: "#94a3b8",
     marginBottom: 8,
   },
-  passwordInput: {
+  passwordWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#1e293b",
-    padding: 16,
     borderRadius: 12,
+    paddingHorizontal: 12,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingVertical: 16,
     color: "#fff",
     fontSize: 16,
+  },
+  toggleButton: {
+    marginLeft: 8,
   },
   error: {
     color: "#ef4444",

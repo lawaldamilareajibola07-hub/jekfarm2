@@ -101,6 +101,14 @@ const WalletDashboardScreen = () => {
       icon: require("../assets/walletActive.png"),
       action: () => navigation.navigate("OrderSuccess"),
     },
+
+    // NEW BUTTON ADDED
+    {
+      title: "Commerce Screens",
+      icon: require("../assets/walletActive.png"),
+      action: () => navigation.navigate("CommerceHub"),
+    },
+
     ...(!hasVirtualAccount
       ? [
           {
@@ -205,7 +213,13 @@ const WalletDashboardScreen = () => {
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#22c55e"]} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#22c55e"]}
+          />
+        }
       >
         {/* Wallet Balance */}
         <WalletBalanceCard balance={balance} loading={loading} />
