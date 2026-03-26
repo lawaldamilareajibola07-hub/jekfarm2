@@ -255,6 +255,14 @@ const CreateAccountScreen = () => {
                 <Text style={styles.createText}>Create Account</Text>
               )}
             </TouchableOpacity>
+
+            {/* ✅ Link to Login screen */}
+            <View style={styles.loginLinkContainer}>
+              <Text style={styles.loginText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+                <Text style={styles.loginLink}>Login</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -390,5 +398,20 @@ const styles = StyleSheet.create({
   strengthBarFill: {
     height: 6,
     borderRadius: 4,
+  },
+  // Styles for login link (added)
+  loginLinkContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  loginText: {
+    color: "#6b7280",
+    fontSize: 14,
+  },
+  loginLink: {
+    color: "#10b981",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

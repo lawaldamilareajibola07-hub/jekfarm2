@@ -1,9 +1,10 @@
 import React from "react";
-import { View, Text, ScrollView, SafeAreaView, StatusBar, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StatusBar, TouchableOpacity, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import DashboardOverview from "../farmers-com/DashboardOverview";
-import KYCBanner from "../components/KYCBanner";
+// import KYCBanner from "../components/KYCBanner"; // Uncomment if needed
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -49,6 +50,8 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <StatusBar barStyle="light-content" />
+      
+      {/* Gradient background – now properly sized to show rounded corners */}
       <LinearGradient
         colors={["#065f46", "#059669", "#10b981"]}
         start={{ x: 0, y: 0 }}
@@ -56,10 +59,14 @@ export default function DashboardScreen() {
         style={styles.headerBackground}
       />
 
+      {/* Header content (overlaps the gradient) */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.greetingText}>Hello, {user?.name || "Farmer"} 👨‍🌾</Text>
+            {/* ✅ Display first name – falls back to "Farmer" if missing */}
+            <Text style={styles.greetingText}>
+              Hello, {user?.first_name || "Farmer"} {user?.last_name} 👨‍🌾
+            </Text>
             <Text style={styles.subText}>Your daily farm insights</Text>
           </View>
           <View style={styles.headerIcons}>
@@ -88,13 +95,8 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingVertical: 10, paddingBottom: 100 }}
       >
-        {/* KYC Banner - Only show if incomplete */}
-        {user && (!user.has_bvn || !user.has_nin) && (
-          <View style={{ paddingHorizontal: 20, marginBottom: 20 }}>
-            <KYCBanner />
-          </View>
-        )}
-
+        {/* Optional KYCBanner – uncomment if you have it */}
+        {/* <KYCBanner /> */}
         <DashboardOverview />
       </ScrollView>
     </SafeAreaView>
@@ -107,13 +109,14 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 200,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    height: 160,                // ✅ Adjusted to cover header area only
+    borderBottomLeftRadius: 60,
+    borderBottomRightRadius: 60,
+    // marginBottom removed – no longer needed
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingVertical: 30,
     paddingBottom: 40,
     zIndex: 100,
   },
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   greetingText: {
-    fontSize: 24,
+    fontSize: 19,
     fontWeight: "800",
     color: "#fff",
     letterSpacing: -0.5,

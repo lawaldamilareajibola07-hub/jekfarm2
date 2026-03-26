@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "AgreonPay",
-    "slug": "Agreonpay-dev",
+    "slug": "Agreonpay",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/adaptive-icon.png",

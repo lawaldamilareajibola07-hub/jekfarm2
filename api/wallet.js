@@ -1,6 +1,7 @@
 // /api/wallet.js
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store"; // Import SecureStore
 import { v4 as uuidv4 } from "uuid";
 
 // -------------------------
@@ -12,8 +13,15 @@ const BASE_URL = "https://productionbackend2.agreonpay.com.ng/api"; // change fo
 // Helper: get Authorization header
 // -------------------------
 const getAuthHeader = async () => {
-  const token = await AsyncStorage.getItem("token");
-  if (!token) throw new Error("User token not found");
+  // Try SecureStore first (where the token is stored on registration/login)
+  let token = await SecureStore.getItemAsync("token");
+  // Fallback to AsyncStorage for older users
+  if (!token) {
+    token = await AsyncStorage.getItem("token");
+  }
+  if (!token) {
+    throw new Error("User token not found");
+  }
   return { Authorization: `Bearer ${token}` };
 };
 
