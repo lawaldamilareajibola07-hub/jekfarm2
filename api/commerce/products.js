@@ -1,50 +1,18 @@
-import api from "../axios";
+// API/commerce/products.js
+import { getMarketplaceProducts } from "./marketplace"; // correct path
 
-/* =========================================
-   LIST MARKETPLACE PRODUCTS
-   Customers see vendor products
-   GET /commerce/vendor/products
-========================================= */
+export const getProductDetail = async (productId) => {
+  try {
+    // fetch all products
+    const res = await getMarketplaceProducts({});
+    const allProducts = res?.data || [];
 
-export const getMarketplaceProducts = async (params = {}) => {
-  const response = await api.get("/commerce/vendor/products", {
-    params,
-  });
+    // find the clicked product
+    const product = allProducts.find((p) => p.id === productId);
 
-  return response.data;
-};
-
-/* =========================================
-   PRODUCT DETAILS
-   GET /commerce/vendor/products/{id}
-========================================= */
-
-export const getProductDetails = async (productId) => {
-  const response = await api.get(`/commerce/vendor/products/${productId}`);
-
-  return response.data;
-};
-
-/* =========================================
-   SEARCH PRODUCTS
-========================================= */
-
-export const searchMarketplaceProducts = async (search) => {
-  const response = await api.get("/commerce/vendor/products", {
-    params: { search },
-  });
-
-  return response.data;
-};
-
-/* =========================================
-   FILTER BY CATEGORY
-========================================= */
-
-export const filterProductsByCategory = async (category) => {
-  const response = await api.get("/commerce/vendor/products", {
-    params: { category },
-  });
-
-  return response.data;
+    return product || null;
+  } catch (error) {
+    console.log("getProductDetail error:", error);
+    return null;
+  }
 };

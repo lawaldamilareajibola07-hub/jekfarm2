@@ -10,14 +10,9 @@ import {
   TouchableOpacity,
 } from "react-native";
 
-import Animated, {
-  FadeIn,
-  FadeInUp,
-  Layout,
-} from "react-native-reanimated";
+import Animated, { FadeIn, FadeInUp, Layout } from "react-native-reanimated";
 
 import ProductCard from "../../../components/commerce/ProductCard";
-import CategoryFilter from "../../../components/commerce/CategoryFilter";
 
 // ✅ Use the public marketplace API for customers
 import { getMarketplaceProducts } from "../../../api/commerce/marketplace";
@@ -27,22 +22,25 @@ export default function MarketplaceScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState(null);
 
   // layout state
   const [isGrid, setIsGrid] = useState(true);
 
   const fetchProducts = async () => {
     try {
-      const res = await getMarketplaceProducts({
-        search,
-        category,
-      });
+      const res = await getMarketplaceProducts({ search });
 
-      console.log("Marketplace API Response:", res);
+console.log("FIRST PRODUCT IMAGES:", JSON.stringify(res?.data?.[0]?.images, null, 2));
+console.log("Marketplace API Response:", res);
+     
+      // ✅ FIX: correctly access API structure
+      const fixedProducts = (res?.data || []).map((item) => ({
+        ...item,
+        stock_quantity: parseFloat(item.stock_quantity ?? 0),
+        images: Array.isArray(item.images) ? item.images : [],
+      }));
 
-      // public endpoint returns: { current_page, data, total }
-      setProducts(res?.data || []);
+      setProducts(fixedProducts);
     } catch (error) {
       console.log("Marketplace Error:", error);
     } finally {
@@ -53,7 +51,7 @@ export default function MarketplaceScreen({ navigation }) {
 
   useEffect(() => {
     fetchProducts();
-  }, [search, category]);
+  }, [search]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -64,18 +62,13 @@ export default function MarketplaceScreen({ navigation }) {
     <Animated.View
       entering={FadeInUp.delay(index * 70)}
       layout={Layout.springify()}
-      style={[
-        styles.cardWrapper,
-        !isGrid && styles.listWrapper,
-      ]}
+      style={[styles.cardWrapper, !isGrid && styles.listWrapper]}
     >
       <ProductCard
         product={item}
         layout={isGrid ? "grid" : "list"}
         onPress={() =>
-          navigation.navigate("ProductDetail", {
-            productId: item?.id,
-          })
+          navigation.navigate("ProductDetails", { product: item })
         }
       />
     </Animated.View>
@@ -91,42 +84,25 @@ export default function MarketplaceScreen({ navigation }) {
 
   return (
     <Animated.View entering={FadeIn.duration(400)} style={styles.container}>
-      
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Marketplace</Text>
 
         <View style={styles.layoutSwitch}>
           <TouchableOpacity
-            style={[
-              styles.switchBtn,
-              isGrid && styles.activeBtn,
-            ]}
+            style={[styles.switchBtn, isGrid && styles.activeBtn]}
             onPress={() => setIsGrid(true)}
           >
-            <Text
-              style={[
-                styles.switchText,
-                isGrid && styles.activeText,
-              ]}
-            >
+            <Text style={[styles.switchText, isGrid && styles.activeText]}>
               Grid
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.switchBtn,
-              !isGrid && styles.activeBtn,
-            ]}
+            style={[styles.switchBtn, !isGrid && styles.activeBtn]}
             onPress={() => setIsGrid(false)}
           >
-            <Text
-              style={[
-                styles.switchText,
-                !isGrid && styles.activeText,
-              ]}
-            >
+            <Text style={[styles.switchText, !isGrid && styles.activeText]}>
               List
             </Text>
           </TouchableOpacity>
@@ -141,29 +117,21 @@ export default function MarketplaceScreen({ navigation }) {
         style={styles.search}
       />
 
-      {/* Category Filter */}
-      <CategoryFilter
-        selected={category}
-        onSelect={(cat) => setCategory(cat)}
-      />
-
       {/* Products */}
       <FlatList
         key={isGrid ? "GRID" : "LIST"}
         data={products}
         renderItem={renderItem}
-        keyExtractor={(item) => item?.id?.toString()}
+        keyExtractor={(item, index) =>
+          item?.id?.toString() || index.toString()
+        }
         numColumns={isGrid ? 2 : 1}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       />
-
     </Animated.View>
   );
 }
