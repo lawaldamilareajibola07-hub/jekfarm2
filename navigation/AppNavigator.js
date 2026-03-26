@@ -36,7 +36,6 @@ import CryptoFundingScreen from "../screens/Points/CryptoFundingScreen";
 import SendCryptoScreen from "../screens/Points/SendCryptoScreen";
 import CommerceNavigatorHub from "../screens/commerce/CommerceNavigatorHub";
 
-
 import FundWalletScreen from "../screens/FundWalletScreen";
 import CreateVirtualAccountScreen from "../screens/CreateVirtualAccountScreen";
 
@@ -64,12 +63,10 @@ import CategoriesScreen from "../screens/CategoriesScreen";
 
 import Checkout from "../screens/components/Checkout";
 import OrderSuccess from "../screens/components/OrderSuccess";
-import ShoppingCartScreen from "../screens/components/ShoppingCart";
 import HomeCategoriesSeeall from "../screens/components/HomeCategoriesSeeall";
 
 import CustomerSupport from "../screens/CustomerSupport";
 import AgricNovaAI from "../screens/AgricNovaAI";
-
 
 // Withdraw Screens
 import WithdrawScreen from "../screens/withdraw/WithdrawScreen";
@@ -79,13 +76,11 @@ import WithdrawSuccessScreen from "../screens/withdraw/WithdrawSuccessScreen";
 import SetTransactionPinScreen from "../screens/settings/SetTransactionPinScreen";
 import ChangePinScreen from "../screens/settings/ChangePinScreen";
 
-
 // Transfer Screens
 import TransferScreen from "../screens/transfer/TransferScreen";
 import TransferReviewScreen from "../screens/transfer/TransferReviewScreen";
 import TransferPinScreen from "../screens/transfer/TransferPinScreen";
 import TransferSuccessScreen from "../screens/transfer/TransferSuccessScreen";
-
 
 // =======================
 // COMMERCE USER SCREENS
@@ -95,7 +90,10 @@ import MarketplaceScreen from "../screens/commerce/marketplace/MarketplaceScreen
 import SearchScreen from "../screens/commerce/search/SearchScreen";
 import VendorStoreScreen from "../screens/commerce/vendor/VendorStoreScreen";
 import ProductImageGalleryScreen from "../screens/commerce/product/ProductImageGalleryScreen";
-import AddToCartScreen from "../screens/commerce/cart/AddToCartScreen";
+
+// ✅ FIXED: Replaced AddToCartScreen with CartScreen
+import CartScreen from "../screens/commerce/cart/CartScreen";
+
 import OrdersScreen from "../screens/commerce/orders/OrdersScreen";
 import OrderDetailScreen from "../screens/commerce/orders/OrderDetailScreen";
 import OrderTrackingScreen from "../screens/commerce/orders/OrderTrackingScreen";
@@ -112,7 +110,6 @@ import AddEditPaymentMethodScreen from "../screens/commerce/payment/AddEditPayme
 import MyReviewsScreen from "../screens/commerce/reviews/MyReviewsScreen";
 import DisputeDetailScreen from "../screens/commerce/disputes/DisputeDetailScreen";
 import TermsPoliciesScreen from "../screens/commerce/user/TermsPoliciesScreen";
-
 
 // Tab Navigators
 import MainTabNavigator from "../components/MainTabNavigator";
@@ -144,20 +141,22 @@ export default function AppNavigator() {
       <Stack.Screen name="ProductDetails" component={ProductDetails} />
       <Stack.Screen name="Categories" component={CategoriesScreen} />
       <Stack.Screen name="HomeCategoriesSeeall" component={HomeCategoriesSeeall} />
-      <Stack.Screen name="ShoppingCart" component={ShoppingCartScreen} />
       <Stack.Screen name="Checkout" component={Checkout} />
       <Stack.Screen name="OrderSuccess" component={OrderSuccess} />
       <Stack.Screen name="AddProduct" component={AddProductScreen} />
 
       {/* ======================= */}
-      {/* COMMERCE USER SCREENS */}
+      {/* COMMERCE USER SCREENS  */}
       {/* ======================= */}
 
       <Stack.Screen name="Marketplace" component={MarketplaceScreen} />
       <Stack.Screen name="SearchProducts" component={SearchScreen} />
       <Stack.Screen name="VendorStore" component={VendorStoreScreen} />
       <Stack.Screen name="ProductGallery" component={ProductImageGalleryScreen} />
-      <Stack.Screen name="AddToCart" component={AddToCartScreen} />
+
+      {/* ✅ FIXED: ShoppingCart now points to the proper CartScreen */}
+      <Stack.Screen name="ShoppingCart" component={CartScreen} />
+
       <Stack.Screen name="Orders" component={OrdersScreen} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
@@ -232,9 +231,8 @@ export default function AppNavigator() {
       <Stack.Screen name="TransactionItem" component={TransactionItem} />
       <Stack.Screen name="ReceiptScreen" component={ReceiptScreen} />
 
- {/* Products */}
-<Stack.Screen name="CommerceHub" component={CommerceNavigatorHub} />
-
+      {/* Commerce Hub */}
+      <Stack.Screen name="CommerceHub" component={CommerceNavigatorHub} />
 
       {/* Subscriptions */}
       <Stack.Screen name="Subscriptions" component={SubscriptionsScreen} />
@@ -242,8 +240,10 @@ export default function AppNavigator() {
       {/* Tab Navigators */}
       <Stack.Screen name="MainTabs" component={MainTabNavigator} />
       <Stack.Screen name="FarmerTabs" component={FarmerTabNavigator} />
-  {/* Admin */}
-<Stack.Screen name="Admin" component={AdminNavigator} />
+
+      {/* Admin */}
+      <Stack.Screen name="Admin" component={AdminNavigator} />
+
       {/* Support */}
       <Stack.Screen name="CustomerSupport" component={CustomerSupport} />
       <Stack.Screen name="AgricNovaAI" component={AgricNovaAI} />

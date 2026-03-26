@@ -34,14 +34,12 @@ const GREEN_DARK = "#16a34a";
 // Helpers
 // ─────────────────────────────────────────────
 
-/** ✅ CONFIRMED FIX: API returns image_url as the key */
 const resolveUri = (img) => {
   if (!img) return null;
   if (typeof img === "string") return img;
   return img?.image_url || img?.url || img?.image_path || img?.path || img?.file_url || img?.media_url || null;
 };
 
-/** Get best image — primary first, then first available */
 const getBestImage = (images) => {
   if (!Array.isArray(images) || images.length === 0) return null;
   const primary = images.find((img) => img?.is_primary);
@@ -263,16 +261,54 @@ export default function ProductDetailsScreen({ route, navigation }) {
   // ── Add to Cart ────────────────────────────
   const handleAddToCart = async () => {
     if (!product) return;
+
     btnScale.value = withSpring(0.95, {}, () => {
       btnScale.value = withSpring(1);
     });
+
     try {
       setAddingToCart(true);
-      await addToCart({ productId: product.id, quantity });
-      Alert.alert("Added to Cart ✓", `${product.name} (×${quantity}) added successfully.`);
+
+      // ✅ FIXED: passes product_id (snake_case) to match backend
+      await addToCart({
+        productId: product.id, // cart.js will convert to product_id
+        quantity,
+      });
+const handleAddToCart = async () => {
+  if (!product) return;
+  console.log("=== ADD TO CART PRESSED ===");
+  console.log("Product ID:", product.id);
+  console.log("Quantity:", quantity);
+  try {
+    setAddingToCart(true);
+    const result = await addToCart({ productId: product.id, quantity });
+    console.log("=== SUCCESS ===", result);
+  } catch (err) {
+    console.log("=== ERROR ===", err?.status, err?.message);
+  } finally {
+    setAddingToCart(false);
+  }
+};
+      Alert.alert(
+        "Added to Cart ✓",
+        `${product.name} (×${quantity}) added successfully.`,
+        [
+          {
+            text: "Continue Shopping",
+            style: "cancel",
+          },
+          {
+            text: "View Cart",
+            onPress: () => navigation.navigate("ShoppingCart"),
+          },
+        ]
+      );
     } catch (err) {
       console.error("Add to cart error:", err);
-      Alert.alert("Error", "Could not add item to cart.");
+      Alert.alert(
+        "Error",
+        err?.message || "Could not add item to cart. Please try again."
+      );
     } finally {
       setAddingToCart(false);
     }

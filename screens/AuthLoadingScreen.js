@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { View, ActivityIndicator, SafeAreaView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { useNavigation } from "@react-navigation/native";
 
 const AuthLoadingScreen = () => {
@@ -18,14 +19,14 @@ const AuthLoadingScreen = () => {
           return;
         }
 
-        // Get User Data and Token
+        // Get User Data from AsyncStorage, Token from SecureStore
         const userData = await AsyncStorage.getItem("user");
-        const token = await AsyncStorage.getItem("auth_token");
+        const token = await SecureStore.getItemAsync("token"); // ✅ matches axios interceptor
 
         if (active && userData && token) {
           const user = JSON.parse(userData);
 
-          // Redirect based on the saved role 👈
+          // Redirect based on the saved role
           if (user.role === "farmer") {
             navigation.replace("FarmerTabs");
           } else {
