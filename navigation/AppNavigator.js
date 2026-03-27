@@ -13,7 +13,6 @@ import ChangePassword from "../screens/ChangePassword";
 import ConfirmOTP from "../screens/ConfirmOTP";
 import ConfirmOTPForgotPassword from "../screens/ConfirmOTPForgotPassword";
 import CompleteProfileScreen from "../screens/CompleteProfileScreen";
-import ProductDetails from "../screens/ProductDetails";
 import ProfileScreen from "../screens/ProfileScreen";
 import Settings from "../screens/Settings-Screens/Settings";
 import PersonalInfoScreen from "../screens/Settings-Screens/PersonalInfoScreen";
@@ -91,7 +90,10 @@ import SearchScreen from "../screens/commerce/search/SearchScreen";
 import VendorStoreScreen from "../screens/commerce/vendor/VendorStoreScreen";
 import ProductImageGalleryScreen from "../screens/commerce/product/ProductImageGalleryScreen";
 
-// ✅ FIXED: Replaced AddToCartScreen with CartScreen
+// ✅ FIXED: correct filename ProductDetailScreen (no s)
+import ProductDetails from "../screens/commerce/product/ProductDetailScreen";
+
+// ✅ FIXED: CartScreen replaces old AddToCartScreen and ShoppingCart
 import CartScreen from "../screens/commerce/cart/CartScreen";
 
 import OrdersScreen from "../screens/commerce/orders/OrdersScreen";
@@ -138,6 +140,7 @@ export default function AppNavigator() {
       <Stack.Screen name="CompleteProfile" component={CompleteProfileScreen} />
 
       {/* Products & Shopping */}
+      {/* ✅ FIXED: Now points to screens/commerce/product/ProductDetailScreen.js */}
       <Stack.Screen name="ProductDetails" component={ProductDetails} />
       <Stack.Screen name="Categories" component={CategoriesScreen} />
       <Stack.Screen name="HomeCategoriesSeeall" component={HomeCategoriesSeeall} />
@@ -152,9 +155,9 @@ export default function AppNavigator() {
       <Stack.Screen name="Marketplace" component={MarketplaceScreen} />
       <Stack.Screen name="SearchProducts" component={SearchScreen} />
       <Stack.Screen name="VendorStore" component={VendorStoreScreen} />
-      <Stack.Screen name="ProductGallery" component={ProductImageGalleryScreen} />
+<Stack.Screen name="ProductImageGallery" component={ProductImageGalleryScreen} />
 
-      {/* ✅ FIXED: ShoppingCart now points to the proper CartScreen */}
+      {/* ✅ FIXED: ShoppingCart now points to proper CartScreen */}
       <Stack.Screen name="ShoppingCart" component={CartScreen} />
 
       <Stack.Screen name="Orders" component={OrdersScreen} />

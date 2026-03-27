@@ -147,7 +147,7 @@ export default function ImagePromoModal({ visible, onClose }) {
 
               {/* PROMO IMAGE */}
               <Image
-                source={require("../../assets/promo.jpeg")}
+                source={require("../../assets/greeting.jpeg")}
                 style={styles.image}
                 resizeMode="contain"
               />
