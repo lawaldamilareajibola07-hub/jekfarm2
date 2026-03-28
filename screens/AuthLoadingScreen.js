@@ -21,7 +21,7 @@ const AuthLoadingScreen = () => {
 
         // Get User Data from AsyncStorage, Token from SecureStore
         const userData = await AsyncStorage.getItem("user");
-        const token = await SecureStore.getItemAsync("token"); // ✅ matches axios interceptor
+        const token = await SecureStore.getItemAsync("token");
 
         if (active && userData && token) {
           const user = JSON.parse(userData);
@@ -29,6 +29,10 @@ const AuthLoadingScreen = () => {
           // Redirect based on the saved role
           if (user.role === "farmer") {
             navigation.replace("FarmerTabs");
+          } else if (user.role === "vendor") {
+            navigation.replace("VendorTabs");
+          } else if (user.role === "admin") {
+            navigation.replace("Admin");
           } else {
             navigation.replace("MainTabs");
           }

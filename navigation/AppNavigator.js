@@ -116,7 +116,7 @@ import TermsPoliciesScreen from "../screens/commerce/user/TermsPoliciesScreen";
 // Tab Navigators
 import MainTabNavigator from "../components/MainTabNavigator";
 import FarmerTabNavigator from "../components/FarmerTabNavigator";
-
+import VendorTabNavigator from "../components/VendorTabNavigator";
 
 const Stack = createNativeStackNavigator();
 
@@ -243,7 +243,7 @@ export default function AppNavigator() {
       {/* Tab Navigators */}
       <Stack.Screen name="MainTabs" component={MainTabNavigator} />
       <Stack.Screen name="FarmerTabs" component={FarmerTabNavigator} />
-
+      <Stack.Screen name="VendorTabs" component={VendorTabNavigator} />
       {/* Admin */}
       <Stack.Screen name="Admin" component={AdminNavigator} />
 

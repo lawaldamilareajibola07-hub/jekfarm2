@@ -76,7 +76,6 @@ function ImageCarousel({ images, onImagePress }) {
   useEffect(() => {
     if (validImages.length === 0) return;
 
-    // Slight delay so image loads first
     const showTimer = setTimeout(() => {
       Animated.parallel([
         Animated.timing(hintOpacity, {
@@ -90,7 +89,6 @@ function ImageCarousel({ images, onImagePress }) {
           useNativeDriver: true,
         }),
       ]).start(() => {
-        // Hold for 2s then fade out
         setTimeout(() => {
           Animated.timing(hintOpacity, {
             toValue: 0,
@@ -442,6 +440,7 @@ export default function ProductDetailsScreen({ route, navigation }) {
   const vendorName = product?.vendor
     ? `${product.vendor.first_name || ""} ${product.vendor.last_name || ""}`.trim()
     : "Unknown Vendor";
+  const vendorId = product?.vendor?.id;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -483,9 +482,26 @@ export default function ProductDetailsScreen({ route, navigation }) {
             </TouchableOpacity>
           </View>
 
-          <Text style={{ fontSize: 13, color: "#777", marginBottom: 10 }}>
-            By {vendorName}
-          </Text>
+          {/* ✅ Vendor name — tappable link to VendorStoreScreen */}
+          <ReAnimated.View entering={FadeInDown.delay(120).duration(350)}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() =>
+                vendorId &&
+                navigation.navigate("VendorStore", {
+                  vendorId,
+                  vendorName,
+                })
+              }
+              style={vendorLinkStyles.row}
+            >
+              <Text style={vendorLinkStyles.byText}>Sold by </Text>
+              <View style={vendorLinkStyles.pill}>
+                <Text style={vendorLinkStyles.storeName}>🏪 {vendorName}</Text>
+                <Text style={vendorLinkStyles.arrow}>›</Text>
+              </View>
+            </TouchableOpacity>
+          </ReAnimated.View>
 
           <View style={[styles.stockBadge, !inStock && styles.stockBadgeOut]}>
             <View style={[styles.stockDot, !inStock && styles.stockDotOut]} />
@@ -649,4 +665,38 @@ const styles = StyleSheet.create({
   addToCartDisabled: { backgroundColor: "#ccc", shadowOpacity: 0 },
   cartIcon: { fontSize: 18 },
   addToCartText: { color: "#fff", fontSize: 15, fontWeight: "700", letterSpacing: 0.2 },
+});
+
+// ── Vendor Link Styles ────────────────────────────────────────────────────────
+
+const vendorLinkStyles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  byText: {
+    fontSize: 13,
+    color: "#777",
+  },
+  pill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: GREEN_LIGHT,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    gap: 4,
+  },
+  storeName: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: GREEN_DARK,
+  },
+  arrow: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: GREEN_DARK,
+    marginTop: -1,
+  },
 });

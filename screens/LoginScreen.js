@@ -20,7 +20,7 @@ import {
 import { FontAwesome as Icon } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "expo-secure-store"; // ✅ ADDED
 import api from "../api/axios";
 
 const LoginScreen = () => {
@@ -168,12 +168,12 @@ const LoginScreen = () => {
           has_bvn: data.data.user.has_bvn || false,
         };
 
-        // Save user data to AsyncStorage (non-sensitive)
+        // ✅ Save user data to AsyncStorage (non-sensitive)
         await AsyncStorage.setItem("user", JSON.stringify(userData));
 
         const token = data.data.token || data.data.user?.session_id;
         if (token) {
-          // Save token to SecureStore to match Axios interceptor
+          // ✅ FIXED: Save token to SecureStore to match Axios interceptor
           await SecureStore.setItemAsync("token", token);
           // Keep session_cookie in AsyncStorage for other uses
           await AsyncStorage.setItem("session_cookie", token);
@@ -189,7 +189,7 @@ const LoginScreen = () => {
         }
 
         const userRole = userData.role.toLowerCase();
-        navigation.replace(userRole === "farmer" || "vendor" ? "FarmerTabs" : "MainTabs");
+        navigation.replace(userRole === "farmer" ? "FarmerTabs" : "MainTabs");
       } else {
         Alert.alert("Login Failed", data.message);
       }
@@ -282,36 +282,17 @@ const LoginScreen = () => {
                 </View>
               </View>
 
-              {/* Row: Remember Me + Forgot Password */}
-              <View style={styles.row}>
-                <TouchableOpacity
-                  onPress={() => setRememberMe(!rememberMe)}
-                  style={styles.checkboxContainer}
-                >
-                  <Icon
-                    name={rememberMe ? "check-square" : "square-o"}
-                    size={18}
-                    color="#10b981"
-                  />
-                  <Text style={styles.rememberText}>Remember Me</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => navigation.navigate("Fbpass")}>
-                  <Text style={styles.forgotText}>Forgot Password?</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                onPress={() => setRememberMe(!rememberMe)}
+                style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}
+              >
+                <Icon name={rememberMe ? "check-square" : "square-o"} size={18} color="#10b981" />
+                <Text style={{ marginLeft: 8, color: "#374151", fontWeight: "500" }}>Remember Me</Text>
+              </TouchableOpacity>
 
               <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
                 {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginText}>Login</Text>}
               </TouchableOpacity>
-
-              {/* Sign Up Link */}
-              <View style={styles.signupContainer}>
-                <Text style={styles.signupText}>Don't have an account? </Text>
-                <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-                  <Text style={styles.signupLink}>Sign Up</Text>
-                </TouchableOpacity>
-              </View>
             </View>
           </View>
         </ScrollView>
@@ -359,69 +340,10 @@ const styles = StyleSheet.create({
   formSection: { width: "100%" },
   inputWrapper: { marginBottom: 20 },
   label: { fontSize: 14, fontWeight: "600", color: "#374151", marginBottom: 8, marginLeft: 4 },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 56,
-    backgroundColor: "#f9fafb",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingHorizontal: 16,
-  },
+  inputContainer: { flexDirection: "row", alignItems: "center", height: 56, backgroundColor: "#f9fafb", borderRadius: 16, borderWidth: 1, borderColor: "#e5e7eb", paddingHorizontal: 16 },
   fieldIcon: { marginRight: 12 },
   input: { flex: 1, height: "100%", fontSize: 15, color: "#111827", fontWeight: "500" },
   eyeIcon: { padding: 8 },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  rememberText: {
-    marginLeft: 8,
-    color: "#374151",
-    fontWeight: "500",
-  },
-  forgotText: {
-    color: "#10b981",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  loginButton: {
-    backgroundColor: "#10b981",
-    height: 56,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 4,
-    shadowColor: "#10b981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  loginText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-  signupContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 24,
-  },
-  signupText: {
-    color: "#6b7280",
-    fontSize: 14,
-  },
-  signupLink: {
-    color: "#10b981",
-    fontSize: 14,
-    fontWeight: "600",
-  },
+  loginButton: { backgroundColor: "#10b981", height: 56, borderRadius: 16, justifyContent: "center", alignItems: "center", elevation: 4, shadowColor: "#10b981", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+  loginText: { color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.5 },
 });
