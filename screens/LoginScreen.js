@@ -20,7 +20,7 @@ import {
 import { FontAwesome as Icon } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as SecureStore from "expo-secure-store"; // ✅ ADDED
+import * as SecureStore from "expo-secure-store";
 import api from "../api/axios";
 
 const LoginScreen = () => {
@@ -173,7 +173,7 @@ const LoginScreen = () => {
 
         const token = data.data.token || data.data.user?.session_id;
         if (token) {
-          // ✅ FIXED: Save token to SecureStore to match Axios interceptor
+          // ✅ Save token to SecureStore to match Axios interceptor
           await SecureStore.setItemAsync("token", token);
           // Keep session_cookie in AsyncStorage for other uses
           await AsyncStorage.setItem("session_cookie", token);
@@ -188,8 +188,18 @@ const LoginScreen = () => {
           await AsyncStorage.removeItem("remember_password");
         }
 
+        // ✅ UPDATED: Route based on all roles
         const userRole = userData.role.toLowerCase();
-        navigation.replace(userRole === "farmer" ? "FarmerTabs" : "MainTabs");
+        if (userRole === "farmer") {
+          navigation.replace("FarmerTabs");
+        } else if (userRole === "vendor") {
+          navigation.replace("VendorTabs");
+        } else if (userRole === "admin") {
+          navigation.replace("Admin");
+        } else {
+          // customer or any other role
+          navigation.replace("MainTabs");
+        }
       } else {
         Alert.alert("Login Failed", data.message);
       }

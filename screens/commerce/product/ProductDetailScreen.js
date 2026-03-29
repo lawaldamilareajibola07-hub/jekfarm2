@@ -387,6 +387,10 @@ export default function ProductDetailsScreen({ route, navigation }) {
   const handleAddToCart = async () => {
     if (!product) return;
 
+    // ✅ DEBUG LOGS — remove after fixing
+    console.log("=== PRODUCT ID ===", product.id);
+    console.log("=== FULL PRODUCT ===", JSON.stringify(product));
+
     btnScale.value = withSpring(0.95, {}, () => {
       btnScale.value = withSpring(1);
     });
