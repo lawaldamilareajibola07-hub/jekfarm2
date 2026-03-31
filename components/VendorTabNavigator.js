@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import VendorHomeScreen from "../screens/vendor/VendorHomeScreen";
 import VendorProductsScreen from "../screens/vendor/VendorProductsScreen";
 import VendorOrdersScreen from "../screens/vendor/VendorOrdersScreen";
-import VendorEarningsScreen from "../screens/vendor/VendorEarningsScreen";
+import VendorWalletScreen from "../screens/vendor/VendorWalletScreen"
 import VendorStoreSettingsScreen from "../screens/vendor/VendorStoreSettingsScreen";
 
 const Tab = createBottomTabNavigator();
@@ -34,9 +34,9 @@ const TAB_CONFIG = [
     activeIcon: "receipt",
   },
   {
-    name: "VendorEarnings",
-    component: VendorEarningsScreen,
-    label: "Earnings",
+    name: "VendorWallet",
+    component: VendorWalletScreen,
+    label: "Wallet",
     icon: "wallet-outline",
     activeIcon: "wallet",
   },

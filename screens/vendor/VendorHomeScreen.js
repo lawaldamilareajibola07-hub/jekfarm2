@@ -7,12 +7,14 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  Image,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { logoutUser } from "../../api/auth"; // Adjust the import path if needed
 
 const BASE_URL = "https://productionbackend2.agreonpay.com.ng/api";
 
@@ -20,8 +22,30 @@ export default function VendorHomeScreen({ navigation }) {
   const [stats, setStats] = useState(null);
   const [recentOrders, setRecentOrders] = useState([]);
   const [vendorInfo, setVendorInfo] = useState(null);
+  const [userFullName, setUserFullName] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Load user data from AsyncStorage and set full name
+  const loadUserData = async () => {
+    try {
+      const userJson = await AsyncStorage.getItem("user");
+      if (userJson) {
+        const user = JSON.parse(userJson);
+        let fullName = "";
+        if (user.first_name && user.last_name) {
+          fullName = `${user.first_name} ${user.last_name}`;
+        } else if (user.first_name) {
+          fullName = user.first_name;
+        } else if (user.name) {
+          fullName = user.name;
+        }
+        setUserFullName(fullName);
+      }
+    } catch (error) {
+      console.log("Error loading user data:", error);
+    }
+  };
 
   const fetchDashboard = async () => {
     try {
@@ -47,14 +71,43 @@ export default function VendorHomeScreen({ navigation }) {
     }
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            await logoutUser(); // clears token and attempts API logout
+            await AsyncStorage.removeItem("user");
+            // Reset navigation stack to Login screen
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Login" }],
+            });
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   useFocusEffect(
     useCallback(() => {
-      fetchDashboard();
+      const loadData = async () => {
+        await loadUserData();
+        await fetchDashboard();
+      };
+      loadData();
     }, [])
   );
 
   const onRefresh = () => {
     setRefreshing(true);
+    loadUserData();
     fetchDashboard();
   };
 
@@ -119,17 +172,24 @@ export default function VendorHomeScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Welcome back 👋</Text>
+          <Text style={styles.greeting}>
+            Welcome back{userFullName ? `, ${userFullName}` : ""} 👋
+          </Text>
           <Text style={styles.storeName}>
             {vendorInfo?.storeName || "Your Store"}
           </Text>
         </View>
-        <TouchableOpacity
-          style={styles.notifBtn}
-          onPress={() => navigation.navigate("Notifications")}
-        >
-          <Ionicons name="notifications-outline" size={22} color="#1F2937" />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={styles.notifBtn}
+            onPress={() => navigation.navigate("Notifications")}
+          >
+            <Ionicons name="notifications-outline" size={22} color="#1F2937" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={22} color="#EF4444" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Stats Grid */}
@@ -151,9 +211,7 @@ export default function VendorHomeScreen({ navigation }) {
         <View style={styles.actionsRow}>
           <TouchableOpacity
             style={styles.actionBtn}
-            onPress={() =>
-              navigation.navigate("AddProduct")
-            }
+            onPress={() => navigation.navigate("AddProduct")}
           >
             <View style={[styles.actionIcon, { backgroundColor: "#EAFAF1" }]}>
               <Ionicons name="add-circle-outline" size={22} color="#2D6A4F" />
@@ -269,11 +327,23 @@ const styles = StyleSheet.create({
   },
   greeting: { fontSize: 13, color: "#6B7280", marginBottom: 2 },
   storeName: { fontSize: 20, fontWeight: "700", color: "#111827" },
+  headerButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
   notifBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  logoutBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FEF2F2",
     justifyContent: "center",
     alignItems: "center",
   },

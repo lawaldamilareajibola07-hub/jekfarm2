@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: "row",
     backgroundColor: "#ffffff",
-    height: 80,
+    height: 90,
     paddingHorizontal: 10,
     alignItems: "center",
     justifyContent: "space-between",

@@ -12,36 +12,46 @@ const AuthLoadingScreen = () => {
 
     const checkLoginStatus = async () => {
       try {
-        // Check if onboarding is done
+        // ── Step 1: Check if onboarding has been completed ──────────────
         const onboardingCompleted = await AsyncStorage.getItem("onboardingCompleted");
-        if (!onboardingCompleted && active) {
-          navigation.replace("Onboarding");
+        if (!onboardingCompleted) {
+          // First ever launch — deep-link into Auth navigator at Onboarding
+          if (active) navigation.replace("Auth", { screen: "Onboarding" });
           return;
         }
 
-        // Get User Data from AsyncStorage, Token from SecureStore
+        // ── Step 2: Check for saved session (user data + token) ──────────
         const userData = await AsyncStorage.getItem("user");
         const token = await SecureStore.getItemAsync("token");
 
         if (active && userData && token) {
           const user = JSON.parse(userData);
 
-          // Redirect based on the saved role
-          if (user.role === "farmer") {
+          // Normalise role to lowercase to avoid casing mismatches
+          // e.g. "Farmer", "FARMER", "farmer" all resolve correctly
+          const role = (user.role || "customer").toLowerCase().trim();
+
+          console.log("✅ Auth check — role found:", role);
+
+          // ── Step 3: Route to the correct Tab Navigator by role ─────────
+          if (role === "farmer") {
             navigation.replace("FarmerTabs");
-          } else if (user.role === "vendor") {
+          } else if (role === "vendor") {
             navigation.replace("VendorTabs");
-          } else if (user.role === "admin") {
+          } else if (role === "admin") {
             navigation.replace("Admin");
           } else {
+            // Covers "customer" and any unknown/future roles
             navigation.replace("MainTabs");
           }
-        } else if (active) {
-          navigation.replace("Login");
+        } else {
+          // ── Onboarding done but no session — go straight to Login ──────
+          if (active) navigation.replace("Auth", { screen: "Login" });
         }
       } catch (error) {
-        console.log("Auth check error:", error);
-        if (active) navigation.replace("Login");
+        // Something went wrong reading storage — fail safe to Login
+        console.log("⚠️ Auth check error:", error);
+        if (active) navigation.replace("Auth", { screen: "Login" });
       }
     };
 

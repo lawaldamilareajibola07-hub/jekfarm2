@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import onboardingData from "../data/onboardingData";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import BackgroundShape from "../assets/Background-Shape.png";
+import BackgroundShape from "../../../../assets/Background-Shape.png";
 
 const { width, height } = Dimensions.get("window");
 

@@ -14,8 +14,8 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons as Icon } from "@expo/vector-icons";
-import Menu from "../assets/menu.png";
-import api from "../api/axios";
+import Menu from "../../../../assets/menu.png";
+import api from "../../../../api/axios";
 
 const CompleteProfileScreen = () => {
   const navigation = useNavigation();

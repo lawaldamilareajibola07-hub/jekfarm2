@@ -16,8 +16,8 @@ import {
 import { Ionicons as Icon } from "@expo/vector-icons";
 import OTPTextInput from "react-native-otp-textinput";
 
-import Menu from "../assets/menu.png";
-import Gmail from "../assets/Gmail.png";
+import Menu from "../../../../assets/menu.png";
+import Gmail from "../../../../assets/Gmail.png";
 
 const ConfirmOTPForgotPassword = ({ navigation, route }) => {
     const [otp, setOtp] = useState("");

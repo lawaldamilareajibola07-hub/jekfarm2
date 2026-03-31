@@ -114,7 +114,7 @@ const CreateAccountScreen = () => {
         Alert.alert("Success", data.message, [
           {
             text: "Continue",
-            onPress: () => navigation.replace("Dashboard"), // navigate to main screen
+            onPress: () => navigation.replace("Login"), // navigate to main screen
           },
         ]);
       } else {

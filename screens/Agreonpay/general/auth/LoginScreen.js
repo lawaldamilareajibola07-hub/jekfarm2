@@ -1,4 +1,4 @@
-// screens/LoginScreen.js
+// screens/Agreonpay/general/auth/LoginScreen.js
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -21,7 +21,7 @@ import { FontAwesome as Icon } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
-import api from "../api/axios";
+import api from "../../../../api/axios";
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -152,10 +152,26 @@ const LoginScreen = () => {
       const res = await api.post("/userManager/login", { login: email, password });
       const data = res.data;
 
+      // ── DEBUG: log the raw API response to Metro terminal ─────────────
+      // Remove these two lines once the role routing is confirmed working
+      console.log("🔍 RAW API USER:", JSON.stringify(data.data.user));
+      console.log("🔍 RAW API DATA:", JSON.stringify(data.data));
+
       if (data.status === "success") {
+
+        // ── Normalise role: checks role, type, user_type, account_type ──
+        // Covers all possible field names the API might return
+        const rawRole =
+          data.data.user.role ||
+          data.data.user.type ||
+          data.data.user.user_type ||
+          data.data.user.account_type ||
+          "customer";
+
         const userData = {
           ...data.data.user,
-          role: data.data.user.role || data.data.user.type || "customer",
+          // Always store role as lowercase so comparisons never fail
+          role: rawRole.toLowerCase().trim(),
           wallet_balance: data.data.user.wallet_balance
             ? parseFloat(data.data.user.wallet_balance)
             : 0,
@@ -179,7 +195,7 @@ const LoginScreen = () => {
           await AsyncStorage.setItem("session_cookie", token);
         }
 
-        // Save or clear credentials
+        // Save or clear remember-me credentials
         if (rememberMe) {
           await AsyncStorage.setItem("remember_email", email);
           await AsyncStorage.setItem("remember_password", password);
@@ -188,18 +204,20 @@ const LoginScreen = () => {
           await AsyncStorage.removeItem("remember_password");
         }
 
-        // ✅ UPDATED: Route based on all roles
-        const userRole = userData.role.toLowerCase();
-        if (userRole === "farmer") {
+        // ── Route based on normalised role ────────────────────────────
+        console.log("✅ Routing user with role:", userData.role);
+
+        if (userData.role === "farmer") {
           navigation.replace("FarmerTabs");
-        } else if (userRole === "vendor") {
+        } else if (userData.role === "vendor") {
           navigation.replace("VendorTabs");
-        } else if (userRole === "admin") {
+        } else if (userData.role === "admin") {
           navigation.replace("Admin");
         } else {
-          // customer or any other role
+          // "customer" or any unrecognised role → customer dashboard
           navigation.replace("MainTabs");
         }
+
       } else {
         Alert.alert("Login Failed", data.message);
       }
@@ -292,17 +310,32 @@ const LoginScreen = () => {
                 </View>
               </View>
 
-              <TouchableOpacity
-                onPress={() => setRememberMe(!rememberMe)}
-                style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}
-              >
-                <Icon name={rememberMe ? "check-square" : "square-o"} size={18} color="#10b981" />
-                <Text style={{ marginLeft: 8, color: "#374151", fontWeight: "500" }}>Remember Me</Text>
-              </TouchableOpacity>
+              {/* Row: Remember Me + Forgot Password */}
+              <View style={styles.row}>
+                <TouchableOpacity
+                  onPress={() => setRememberMe(!rememberMe)}
+                  style={styles.checkboxContainer}
+                >
+                  <Icon name={rememberMe ? "check-square" : "square-o"} size={18} color="#10b981" />
+                  <Text style={styles.rememberText}>Remember Me</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => navigation.navigate("Fbpass")}>
+                  <Text style={styles.forgotText}>Forgot Password?</Text>
+                </TouchableOpacity>
+              </View>
 
               <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
                 {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginText}>Login</Text>}
               </TouchableOpacity>
+
+              {/* Sign Up / Create Account Link */}
+              <View style={styles.signupContainer}>
+                <Text style={styles.signupText}>Don't have an account? </Text>
+                <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+                  <Text style={styles.signupLink}>Sign Up</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -350,10 +383,69 @@ const styles = StyleSheet.create({
   formSection: { width: "100%" },
   inputWrapper: { marginBottom: 20 },
   label: { fontSize: 14, fontWeight: "600", color: "#374151", marginBottom: 8, marginLeft: 4 },
-  inputContainer: { flexDirection: "row", alignItems: "center", height: 56, backgroundColor: "#f9fafb", borderRadius: 16, borderWidth: 1, borderColor: "#e5e7eb", paddingHorizontal: 16 },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 56,
+    backgroundColor: "#f9fafb",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    paddingHorizontal: 16,
+  },
   fieldIcon: { marginRight: 12 },
   input: { flex: 1, height: "100%", fontSize: 15, color: "#111827", fontWeight: "500" },
   eyeIcon: { padding: 8 },
-  loginButton: { backgroundColor: "#10b981", height: 56, borderRadius: 16, justifyContent: "center", alignItems: "center", elevation: 4, shadowColor: "#10b981", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
-  loginText: { color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.5 },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  rememberText: {
+    marginLeft: 8,
+    color: "#374151",
+    fontWeight: "500",
+  },
+  forgotText: {
+    color: "#10b981",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  loginButton: {
+    backgroundColor: "#10b981",
+    height: 56,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#10b981",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  loginText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  signupContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 24,
+  },
+  signupText: {
+    color: "#6b7280",
+    fontSize: 14,
+  },
+  signupLink: {
+    color: "#10b981",
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });
