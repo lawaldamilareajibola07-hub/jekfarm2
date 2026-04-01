@@ -17,7 +17,7 @@ import { FontAwesome as Icon } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import * as SecureStore from "expo-secure-store"; // <- added for token storage
+import * as SecureStore from "expo-secure-store";
 
 const CreateAccountScreen = () => {
   const navigation = useNavigation();
@@ -110,11 +110,11 @@ const CreateAccountScreen = () => {
 
       if (data.status === "success") {
         const token = data.data.token;
-        await SecureStore.setItemAsync("token", token); // store token securely
+        await SecureStore.setItemAsync("token", token);
         Alert.alert("Success", data.message, [
           {
             text: "Continue",
-            onPress: () => navigation.replace("Login"), // navigate to main screen
+            onPress: () => navigation.replace("Login"),
           },
         ]);
       } else {
@@ -186,6 +186,7 @@ const CreateAccountScreen = () => {
               error={errors.phone}
             />
 
+            {/* ✅ FIXED PASSWORD FIELD */}
             <FloatingInput
               label="Password"
               value={password}
@@ -194,7 +195,11 @@ const CreateAccountScreen = () => {
               error={errors.password}
               rightIcon={
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Icon name={showPassword ? "eye" : "eye-slash"} size={18} color="#9ca3af" />
+                  <Icon
+                    name={showPassword ? "eye" : "eye-slash"}
+                    size={18}
+                    color="#9ca3af"
+                  />
                 </TouchableOpacity>
               }
             />
@@ -226,9 +231,11 @@ const CreateAccountScreen = () => {
                 style={styles.dateBox}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Text>{dob || "Select Date"}</Text>
+                <Text style={styles.dateText}>{dob || "Select Date"}</Text>
               </TouchableOpacity>
-              {errors.dob && <Text style={styles.errorText}>{errors.dob}</Text>}
+              {errors.dob && (
+                <Text style={styles.errorText}>{errors.dob}</Text>
+              )}
               {showDatePicker && (
                 <DateTimePicker
                   value={dob ? new Date(dob) : new Date()}
@@ -256,7 +263,6 @@ const CreateAccountScreen = () => {
               )}
             </TouchableOpacity>
 
-            {/* ✅ Link to Login screen */}
             <View style={styles.loginLinkContainer}>
               <Text style={styles.loginText}>Already have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate("Login")}>
@@ -270,7 +276,7 @@ const CreateAccountScreen = () => {
   );
 };
 
-/* Floating Input Component */
+/* ✅ FIXED Floating Input Component */
 const FloatingInput = ({
   label,
   value,
@@ -284,12 +290,20 @@ const FloatingInput = ({
   const animated = useRef(new Animated.Value(value ? 1 : 0)).current;
 
   const handleFocus = () => {
-    Animated.timing(animated, { toValue: 1, duration: 200, useNativeDriver: false }).start();
+    Animated.timing(animated, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
   };
 
   const handleBlur = () => {
     if (!value) {
-      Animated.timing(animated, { toValue: 0, duration: 200, useNativeDriver: false }).start();
+      Animated.timing(animated, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
     }
   };
 
@@ -297,27 +311,38 @@ const FloatingInput = ({
     position: "absolute",
     left: 16,
     top: animated.interpolate({ inputRange: [0, 1], outputRange: [18, -8] }),
-    fontSize: animated.interpolate({ inputRange: [0, 1], outputRange: [15, 12] }),
+    fontSize: animated.interpolate({
+      inputRange: [0, 1],
+      outputRange: [15, 12],
+    }),
     color: "#6b7280",
     backgroundColor: "#fff",
     paddingHorizontal: 4,
+    zIndex: 1,
   };
 
   return (
     <View style={{ marginBottom: 22 }}>
       <View style={styles.inputContainer}>
+        {/* Floating label sits above the row */}
         <Animated.Text style={labelStyle}>{label}</Animated.Text>
-        <TextInput
-          style={styles.input}
-          value={value}
-          onChangeText={onChangeText}
-          keyboardType={keyboardType}
-          secureTextEntry={secureTextEntry}
-          maxLength={maxLength}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-        />
-        {rightIcon}
+
+        {/* ✅ Row holds TextInput + icon side by side */}
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.input}
+            value={value}
+            onChangeText={onChangeText}
+            keyboardType={keyboardType}
+            secureTextEntry={secureTextEntry}
+            maxLength={maxLength}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+          />
+          {rightIcon && (
+            <View style={styles.rightIconWrapper}>{rightIcon}</View>
+          )}
+        </View>
       </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
@@ -331,7 +356,9 @@ const PasswordStrengthBar = ({ strength }) => {
   return (
     <View style={{ marginBottom: 20 }}>
       <View style={styles.strengthBarBackground}>
-        <View style={[styles.strengthBarFill, { width, backgroundColor: color }]} />
+        <View
+          style={[styles.strengthBarFill, { width, backgroundColor: color }]}
+        />
       </View>
     </View>
   );
@@ -371,15 +398,43 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
     padding: 16,
   },
+  dateText: {
+    fontSize: 15,
+    color: "#374151",
+  },
+
+  // ✅ FIXED: inputContainer no longer uses justifyContent center alone
   inputContainer: {
     borderWidth: 1.5,
     borderRadius: 16,
+    borderColor: "#e5e7eb",
     paddingHorizontal: 16,
-    paddingTop: 18,
-    height: 60,
-    justifyContent: "center",
+    paddingTop: 20,
+    paddingBottom: 10,
+    minHeight: 60,
   },
-  input: { flex: 1, fontSize: 15 },
+
+  // ✅ NEW: row that aligns TextInput and icon horizontally
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  // ✅ FIXED: added color so typed text is visible
+  input: {
+    flex: 1,
+    fontSize: 15,
+    color: "#111827",
+    paddingVertical: 0,
+  },
+
+  // ✅ NEW: keeps icon to the right, vertically centered
+  rightIconWrapper: {
+    paddingLeft: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   createButton: {
     backgroundColor: "#10b981",
     height: 56,
@@ -399,7 +454,6 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 4,
   },
-  // Styles for login link (added)
   loginLinkContainer: {
     flexDirection: "row",
     justifyContent: "center",

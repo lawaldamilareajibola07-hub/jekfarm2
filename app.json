@@ -7,7 +7,7 @@
     "icon": "./assets/adaptive-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "scheme": "agreonpay",  
+    "scheme": "agreonpay",
     "splash": {
       "image": "./assets/adaptive-icon.png",
       "resizeMode": "contain",
@@ -34,10 +34,9 @@
       "expo-font",
       "expo-secure-store"
     ],
-    "owner": "sheddycode",
     "extra": {
       "eas": {
-        "projectId": "ef38591e-1169-4c1f-951f-3c7309875443"
+        "projectId": "90cf5a57-22f1-4f27-9e34-60bb19123fd4"
       }
     }
   }
